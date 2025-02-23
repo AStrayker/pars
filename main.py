@@ -23,7 +23,7 @@ SUBSCRIPTION_CHANNEL_ID = -1002425905138  # Уточните реальный ID
 SUPPORT_USERNAME = '@alex_strayker'
 TON_WALLET_ADDRESS = 'UQAP4wrP0Jviy03CTeniBjSnAL5UHvcMFtxyi1Ip1exl9pLu'  # Адрес кошелька TON
 TON_API_KEY = 'YOUR_TON_API_KEY'  # Получите API ключ с toncenter.com
-ADMIN_IDS = ['2037127199']  # ID администратора (замените на ваш Telegram ID)
+ADMIN_IDS = ['282198872']  # ID администратора (замените на ваш Telegram ID)
 
 # Создание клиента Telethon
 client_telethon = TelegramClient('session_name', API_ID, API_HASH)
