@@ -1,0 +1,6 @@
+python-telegram-bot==20.3
+telethon==1.31.4
+pandas==2.0.3
+requests==2.31.0
+vobject==0.9.6.1
+python-dotenv==1.0.0
