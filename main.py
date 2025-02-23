@@ -21,7 +21,7 @@ BOT_TOKEN = '7981019134:AAHGkn_2ACcS76NbtQDY7L7pAONIPmMSYoA'
 LOG_CHANNEL_ID = -1002342891238  # Уточните реальный ID
 SUBSCRIPTION_CHANNEL_ID = -1002425905138  # Уточните реальный ID
 SUPPORT_USERNAME = '@alex_strayker'
-TON_WALLET_ADDRESS = '''UQAP4wrP0Jviy03CTeniBjSnAL5UHvcMFtxyi1Ip1exl9pLu'''  # Адрес кошелька TON
+TON_WALLET_ADDRESS = 'UQAP4wrP0Jviy03CTeniBjSnAL5UHvcMFtxyi1Ip1exl9pLu'  # Адрес кошелька TON
 TON_API_KEY = 'YOUR_TON_API_KEY'  # Получите API ключ с toncenter.com
 ADMIN_IDS = ['2037127199']  # ID администратора (замените на ваш Telegram ID)
 
@@ -89,23 +89,15 @@ LANGUAGES = {
         'payment_cancel': 'Отменить',
         'payment_paid': 'Я оплатил',
         'payment_hash': 'Отправьте хеш транзакции:',
-        'payment_pending': 'Ожидается поступление средств',
-        'payment_update': 'Обновить информацию',
+        'payment_pending': 'Запрос на проверку платежа отправлен',
+        'payment_update': 'Понятно',
         'payment_success': 'Платёж успешно подтверждён! Ваша подписка активирована до {end_time}.',
         'payment_error': 'Ошибка при проверке платежа: {error}',
+        'payment_invalid': 'Ваша транзакция не действительна!\nДля решения проблем обратитесь к {support}',
         'entity_error': 'Не удалось получить информацию о пользователе. Пользователь может быть приватным или недоступным.',
         'no_filter': 'Не применять фильтр',
         'phone_contacts': 'Сбор номеров телефонов и ФИО',
-        'auth_access': 'Авторизация для закрытых чатов',
-        'caption_phones': 'Вот ваш файл с номерами телефонов и ФИО (Excel и VCF).',
-        'auth_request': 'Для доступа к закрытым чатам добавьте бота в чат как администратора или отправьте ссылку на закрытый чат.',
-        'auth_success': 'Доступ к закрытому чату успешно предоставлен!',
-        'auth_error': 'Не удалось получить доступ. Убедитесь, что бот добавлен как администратор или чат публичный.',
-        'note_cmd': 'Заметка успешно сохранена (бот не будет реагировать).',
-        'parse_user_comments': 'Комментарии конкретного пользователя',
-        'user_comments_prompt': 'Отправь ссылку на чат, ссылку на пост или перешли пост, чтобы начать парсинг.',
-        'user_id_prompt': 'Отправь ID пользователя или @username пользователя, чьи комментарии нужно собрать.',
-        'caption_user_comments': 'Вот ваш файл с комментариями пользователя.',
+        'note_cmd': 'Заметка успешно сохранена (бот не будет реагировать).'
     },
     'Украинский': {
         'welcome': 'Привіт! Обери мову спілкування:',
@@ -152,23 +144,15 @@ LANGUAGES = {
         'payment_cancel': 'Скасувати',
         'payment_paid': 'Я оплатив',
         'payment_hash': 'Надішліть хеш транзакції:',
-        'payment_pending': 'Очікується надходження коштів',
-        'payment_update': 'Оновити інформацію',
+        'payment_pending': 'Запит на перевірку платежу відправлено',
+        'payment_update': 'Зрозуміло',
         'payment_success': 'Платіж успішно підтверджений! Ваша підписка активована до {end_time}.',
         'payment_error': 'Помилка при перевірці платежу: {error}',
+        'payment_invalid': 'Ваша транзакція недійсна!\nДля вирішення проблем зверніться до {support}',
         'entity_error': 'Не вдалося отримати інформацію про користувача. Користувач може бути приватним або недоступним.',
         'no_filter': 'Не застосовувати фільтр',
         'phone_contacts': 'Збір номерів телефонів та ПІБ',
-        'auth_access': 'Авторизація для закритих чатів',
-        'caption_phones': 'Ось ваш файл з номерами телефонів та ПІБ (Excel і VCF).',
-        'auth_request': 'Для доступу до закритих чатів додайте бота в чат як адміністратора або надішліть посилання на закритий чат.',
-        'auth_success': 'Доступ до закритого чату успішно надано!',
-        'auth_error': 'Не вдалося отримати доступ. Переконайтесь, що бот доданий як адміністратор або чат публічний.',
-        'note_cmd': 'Примітка успішно збережено (бот не реагуватиме).',
-        'parse_user_comments': 'Коментарі конкретного користувача',
-        'user_comments_prompt': 'Надішли посилання на чат, посилання на пост або перешли пост, щоб розпочати парсинг.',
-        'user_id_prompt': 'Надішли ID користувача або @username користувача, чиї коментарі потрібно зібрати.',
-        'caption_user_comments': 'Ось ваш файл з коментарями користувача.',
+        'note_cmd': 'Примітка успішно збережено (бот не реагуватиме).'
     },
     'English': {
         'welcome': 'Hello! Choose your language:',
@@ -215,23 +199,15 @@ LANGUAGES = {
         'payment_cancel': 'Cancel',
         'payment_paid': 'I Paid',
         'payment_hash': 'Send the transaction hash:',
-        'payment_pending': 'Awaiting funds transfer',
-        'payment_update': 'Update Information',
+        'payment_pending': 'Payment verification request sent',
+        'payment_update': 'Understood',
         'payment_success': 'Payment successfully confirmed! Your subscription is activated until {end_time}.',
         'payment_error': 'Error checking payment: {error}',
+        'payment_invalid': 'Your transaction is invalid!\nFor issue resolution, contact {support}',
         'entity_error': 'Could not retrieve user information. The user may be private or inaccessible.',
         'no_filter': 'Do not apply filter',
         'phone_contacts': 'Collect phone numbers and full names',
-        'auth_access': 'Authorize for private chats',
-        'caption_phones': 'Here is your file with phone numbers and full names (Excel and VCF).',
-        'auth_request': 'To access private chats, add the bot as an admin or send a link to a private chat.',
-        'auth_success': 'Access to the private chat successfully granted!',
-        'auth_error': 'Could not gain access. Ensure the bot is added as an admin or the chat is public.',
-        'note_cmd': 'Note successfully saved (bot will not respond).',
-        'parse_user_comments': 'Comments of a specific user',
-        'user_comments_prompt': 'Send a chat link, post link, or forward a post to start parsing.',
-        'user_id_prompt': 'Send the user ID or @username of the user whose comments you want to collect.',
-        'caption_user_comments': 'Here is your file with the user’s comments.',
+        'note_cmd': 'Note successfully saved (bot will not respond).'
     },
     'Deutsch': {
         'welcome': 'Hallo! Wähle deine Sprache:',
@@ -278,23 +254,15 @@ LANGUAGES = {
         'payment_cancel': 'Abbrechen',
         'payment_paid': 'Ich habe bezahlt',
         'payment_hash': 'Sende den Transaktionshash:',
-        'payment_pending': 'Warten auf Zahlungseingang',
-        'payment_update': 'Informationen aktualisieren',
+        'payment_pending': 'Zahlungsprüfungsanfrage gesendet',
+        'payment_update': 'Verstanden',
         'payment_success': 'Zahlung erfolgreich bestätigt! Dein Abonnement ist bis {end_time} aktiviert.',
         'payment_error': 'Fehler bei der Zahlungsprüfung: {error}',
+        'payment_invalid': 'Deine Transaktion ist ungültig!\nFür Problemlösungen kontaktiere {support}',
         'entity_error': 'Konnte keine Benutzerinformationen abrufen. Der Benutzer könnte privat oder nicht zugänglich sein.',
         'no_filter': 'Keinen Filter anwenden',
         'phone_contacts': 'Telefonnummern und vollständige Namen sammeln',
-        'auth_access': 'Autorisierung für private Chats',
-        'caption_phones': 'Hier ist deine Datei mit Telefonnummern und vollständigen Namen (Excel und VCF).',
-        'auth_request': 'Um auf private Chats zuzugreifen, füge den Bot als Administrator hinzu oder sende einen Link zu einem privaten Chat.',
-        'auth_success': 'Zugang zum privaten Chat erfolgreich gewährt!',
-        'auth_error': 'Konnte keinen Zugriff erhalten. Stelle sicher, dass der Bot als Administrator hinzugefügt wurde oder der Chat öffentlich ist.',
-        'note_cmd': 'Notiz erfolgreich gespeichert (der Bot wird nicht reagieren).',
-        'parse_user_comments': 'Kommentare eines bestimmten Benutzers',
-        'user_comments_prompt': 'Sende einen Chat-Link, einen Beitrag-Link oder leite einen Beitrag weiter, um mit dem Parsen zu beginnen.',
-        'user_id_prompt': 'Sende die Benutzer-ID oder @username des Benutzers, dessen Kommentare gesammelt werden sollen.',
-        'caption_user_comments': 'Hier ist deine Datei mit den Kommentaren des Benutzers.',
+        'note_cmd': 'Notiz erfolgreich gespeichert (der Bot wird nicht reagieren).'
     }
 }
 
@@ -612,121 +580,130 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     limit_ok, hours_left = check_request_limit(user_id)
     if not limit_ok:
-        await update.message.reply_text(texts['limit_reached'].format(limit=5 if users[str(user_id)]['subscription']['type'] == 'Бесплатная' else 10, hours=hours_left))
+        try:
+            await update.message.reply_text(texts['limit_reached'].format(limit=5 if users[str(user_id)]['subscription']['type'] == 'Бесплатная' else 10, hours=hours_left))
+        except telegram_error.RetryAfter as e:
+            await asyncio.sleep(e.retry_after)
+            await update.message.reply_text(texts['limit_reached'].format(limit=5 if users[str(user_id)]['subscription']['type'] == 'Бесплатная' else 10, hours=hours_left))
         return
     
     text = update.message.text.strip() if update.message.text else ""
     
-    if text.startswith('/note '):
-        await note(update, context)
-        return
-    
-    if 'waiting_for_id' in context.user_data:
-        if text.startswith('@'):
-            try:
-                entity = await client_telethon.get_entity(text[1:])
-                msg = await update.message.reply_text(texts['id_result'].format(id=entity.id), reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
-                ]))
-                await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=["🎉"])
-            except telethon_errors.RPCError as e:
-                await update.message.reply_text(texts['rpc_error'].format(e=str(e)))
-                await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
-        elif update.message.forward_origin and hasattr(update.message.forward_origin, 'chat'):
-            chat_id = update.message.forward_origin.chat.id
-            msg = await update.message.reply_text(texts['id_result'].format(id=chat_id), reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
-            ]))
-            await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=["🎉"])
-            await log_to_channel(context, f"Получен ID чата: {chat_id}", username)
-        elif update.message.forward_origin and hasattr(update.message.forward_origin, 'sender_user'):
-            user_id_forward = update.message.forward_origin.sender_user.id
-            msg = await update.message.reply_text(texts['id_result'].format(id=user_id_forward), reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
-            ]))
-            await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=["🎉"])
-            await log_to_channel(context, f"Получен ID пользователя: {user_id_forward}", username)
-        elif text.startswith('https://t.me/'):
-            try:
-                parts = text.split('/')
-                if len(parts) > 4:
-                    chat_id = f"@{parts[-2]}" if not parts[-2].startswith('+') else parts[-2]
-                    entity = await client_telethon.get_entity(chat_id)
+    try:
+        if text.startswith('/note '):
+            await note(update, context)
+            return
+        
+        if 'waiting_for_id' in context.user_data:
+            if text.startswith('@'):
+                try:
+                    entity = await client_telethon.get_entity(text[1:])
                     msg = await update.message.reply_text(texts['id_result'].format(id=entity.id), reply_markup=InlineKeyboardMarkup([
                         [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
                     ]))
                     await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=["🎉"])
-                    await log_to_channel(context, f"Получен ID через ссылку: {entity.id}", username)
-                else:
-                    await update.message.reply_text("Отправь корректную ссылку!")
-            except telethon_errors.RPCError as e:
-                await update.message.reply_text(texts['rpc_error'].format(e=str(e)))
-                await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
-        del context.user_data['waiting_for_id']
-        return
-    
-    if 'waiting_for_limit' in context.user_data:
-        try:
-            limit = int(text)
-            max_limit = check_parse_limit(user_id, float('inf'), context)
-            if limit <= 0 or limit > max_limit:
-                await update.message.reply_text(texts['invalid_limit'].format(max_limit=max_limit), reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit')]]))
-                return
-            context.user_data['limit'] = limit
-            del context.user_data['waiting_for_limit']
-            await ask_for_filters(update.message, context)
-        except ValueError:
-            await update.message.reply_text(texts['invalid_number'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit')]]))
-        return
-
-    if 'waiting_for_filters' in context.user_data:
-        filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False})
-        if 'да' in text.lower():
-            filters[context.user_data['current_filter']] = True
-        del context.user_data['waiting_for_filters']
-        del context.user_data['current_filter']
-        context.user_data['filters'] = filters
-        await process_parsing(update.message, context)
-        return
-    
-    if 'waiting_for_user_id' in context.user_data:
-        context.user_data['user_id_or_username'] = text
-        del context.user_data['waiting_for_user_id']
-        await process_parsing(update.message, context)
-        return
-    
-    if 'waiting_for_hash' in context.user_data:
-        context.user_data['transaction_hash'] = text
-        del context.user_data['waiting_for_hash']
-        await check_payment_status(update.message, context)
-        return
-
-    if 'parse_type' in context.user_data:
-        if text and context.user_data['parse_type'] in ['parse_user_comments', 'parse_user_chats']:
-            if context.user_data['parse_type'] == 'parse_user_comments':
-                context.user_data['chat_link'] = text
-                await update.message.reply_text(texts['user_id_prompt'])
-                context.user_data['waiting_for_user_id'] = True
-            elif context.user_data['parse_type'] == 'parse_user_chats':
-                context.user_data['user_id_or_username'] = text
-                await process_parsing(update.message, context)
-        elif text:
-            links = text.split('\n') if '\n' in text else [text]
-            if context.user_data['parse_type'] == 'parse_post_commentators':
-                valid_links = [link for link in links if link.startswith('https://t.me/') and '/' in link[13:]]
-                if not valid_links:
-                    await update.message.reply_text(texts['invalid_link'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['fix_link'], callback_data='fix_link')]]))
-                    context.user_data['last_input'] = text
+                except telethon_errors.RPCError as e:
+                    await update.message.reply_text(texts['rpc_error'].format(e=str(e)))
+                    await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
+            elif update.message.forward_origin and hasattr(update.message.forward_origin, 'chat'):
+                chat_id = update.message.forward_origin.chat.id
+                msg = await update.message.reply_text(texts['id_result'].format(id=chat_id), reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
+                ]))
+                await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=["🎉"])
+                await log_to_channel(context, f"Получен ID чата: {chat_id}", username)
+            elif update.message.forward_origin and hasattr(update.message.forward_origin, 'sender_user'):
+                user_id_forward = update.message.forward_origin.sender_user.id
+                msg = await update.message.reply_text(texts['id_result'].format(id=user_id_forward), reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
+                ]))
+                await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=["🎉"])
+                await log_to_channel(context, f"Получен ID пользователя: {user_id_forward}", username)
+            elif text.startswith('https://t.me/'):
+                try:
+                    parts = text.split('/')
+                    if len(parts) > 4:
+                        chat_id = f"@{parts[-2]}" if not parts[-2].startswith('+') else parts[-2]
+                        entity = await client_telethon.get_entity(chat_id)
+                        msg = await update.message.reply_text(texts['id_result'].format(id=entity.id), reply_markup=InlineKeyboardMarkup([
+                            [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
+                        ]))
+                        await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=["🎉"])
+                        await log_to_channel(context, f"Получен ID через ссылку: {entity.id}", username)
+                    else:
+                        await update.message.reply_text("Отправь корректную ссылку!")
+                except telethon_errors.RPCError as e:
+                    await update.message.reply_text(texts['rpc_error'].format(e=str(e)))
+                    await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
+            del context.user_data['waiting_for_id']
+            return
+        
+        if 'waiting_for_limit' in context.user_data:
+            try:
+                limit = int(text)
+                max_limit = check_parse_limit(user_id, float('inf'), context)
+                if limit <= 0 or limit > max_limit:
+                    await update.message.reply_text(texts['invalid_limit'].format(max_limit=max_limit), reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit')]]))
                     return
-                context.user_data['links'] = valid_links
-            else:
-                context.user_data['links'] = links
-            await ask_for_limit(update.message, context)
-        elif update.message.forward_origin and hasattr(update.message.forward_origin, 'chat') and context.user_data['parse_type'] == 'parse_post_commentators':
-            context.user_data['links'] = [f"https://t.me/{update.message.forward_origin.chat.username}/{update.message.forward_origin.message_id}"]
-            context.user_data['chat_id'] = update.message.forward_origin.chat.id
-            context.user_data['post'] = update.message.forward_origin.message_id
-            await ask_for_limit(update.message, context)
+                context.user_data['limit'] = limit
+                del context.user_data['waiting_for_limit']
+                await ask_for_filters(update.message, context)
+            except ValueError:
+                await update.message.reply_text(texts['invalid_number'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit')]]))
+            return
+
+        if 'waiting_for_filters' in context.user_data:
+            filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False})
+            if 'да' in text.lower():
+                filters[context.user_data['current_filter']] = True
+            del context.user_data['waiting_for_filters']
+            del context.user_data['current_filter']
+            context.user_data['filters'] = filters
+            await process_parsing(update.message, context)
+            return
+        
+        if 'waiting_for_hash' in context.user_data:
+            context.user_data['transaction_hash'] = text
+            del context.user_data['waiting_for_hash']
+            await notify_payment_pending(update.message, context)
+            return
+
+        if 'parse_type' in context.user_data:
+            if text:
+                links = text.split('\n') if '\n' in text else [text]
+                if context.user_data['parse_type'] == 'parse_post_commentators':
+                    valid_links = [link for link in links if link.startswith('https://t.me/') and '/' in link[13:]]
+                    if not valid_links:
+                        await update.message.reply_text(texts['invalid_link'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['fix_link'], callback_data='fix_link')]]))
+                        context.user_data['last_input'] = text
+                        return
+                    context.user_data['links'] = valid_links
+                else:
+                    context.user_data['links'] = links
+                await ask_for_limit(update.message, context)
+            elif update.message.forward_origin and hasattr(update.message.forward_origin, 'chat') and context.user_data['parse_type'] == 'parse_post_commentators':
+                context.user_data['links'] = [f"https://t.me/{update.message.forward_origin.chat.username}/{update.message.forward_origin.message_id}"]
+                context.user_data['chat_id'] = update.message.forward_origin.chat.id
+                context.user_data['post'] = update.message.forward_origin.message_id
+                await ask_for_limit(update.message, context)
+
+    except telegram_error.RetryAfter as e:
+        await asyncio.sleep(e.retry_after)
+        # Повторяем последнюю операцию, если это возможно
+        if 'waiting_for_id' in context.user_data and text.startswith('@'):
+            entity = await client_telethon.get_entity(text[1:])
+            await update.message.reply_text(texts['id_result'].format(id=entity.id), reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
+            ]))
+        elif text.startswith('/note '):
+            await note(update, context)
+        elif 'waiting_for_hash' in context.user_data:
+            await notify_payment_pending(update.message, context)
+        await log_to_channel(context, f"Повторная попытка после flood control для @{username}", username)
+
+    except Exception as e:
+        await log_to_channel(context, f"Неизвестная ошибка в handle_message: {str(e)}", username)
+        raise
 
 # Запрос лимита парсинга
 async def ask_for_limit(message, context):
@@ -743,7 +720,11 @@ async def ask_for_limit(message, context):
     ]
     if is_paid:
         keyboard.append([InlineKeyboardButton(texts['no_filter'], callback_data='no_filter')])
-    await message.reply_text(texts['limit'], reply_markup=InlineKeyboardMarkup(keyboard))
+    try:
+        await message.reply_text(texts['limit'], reply_markup=InlineKeyboardMarkup(keyboard))
+    except telegram_error.RetryAfter as e:
+        await asyncio.sleep(e.retry_after)
+        await message.reply_text(texts['limit'], reply_markup=InlineKeyboardMarkup(keyboard))
 
 # Запрос фильтров
 async def ask_for_filters(message, context):
@@ -757,7 +738,11 @@ async def ask_for_filters(message, context):
     context.user_data['waiting_for_filters'] = True
     context.user_data['current_filter'] = 'only_with_username'
     context.user_data['filters'] = {'only_with_username': False, 'exclude_bots': False, 'only_active': False}
-    await message.reply_text(texts['filter_username'], reply_markup=InlineKeyboardMarkup(keyboard))
+    try:
+        await message.reply_text(texts['filter_username'], reply_markup=InlineKeyboardMarkup(keyboard))
+    except telegram_error.RetryAfter as e:
+        await asyncio.sleep(e.retry_after)
+        await message.reply_text(texts['filter_username'], reply_markup=InlineKeyboardMarkup(keyboard))
 
 # Функции парсинга
 async def parse_commentators(group_link, limit):
@@ -851,122 +836,6 @@ async def parse_phone_contacts(group_link, limit):
             })
     return data
 
-async def parse_user_comments(chat_link, user_id_or_username, limit):
-    try:
-        # Получаем сущность чата или поста
-        if chat_link.startswith('https://t.me/'):
-            parts = chat_link.split('/')
-            if len(parts) > 4:  # Ссылка на пост
-                chat_id = parts[-2] if parts[-2].startswith('+') else f'@{parts[-2]}'
-                message_id = int(parts[-1])
-                entity = await client_telethon.get_entity(chat_id)
-                message = await client_telethon.get_messages(entity, ids=message_id)
-                if not message:
-                    return []
-            else:  # Ссылка на чат
-                entity = await client_telethon.get_entity(chat_link.split('/')[-1])
-        elif hasattr(chat_link, 'chat') and hasattr(chat_link, 'message_id'):  # Пересланный пост
-            entity = await client_telethon.get_entity(chat_link.chat.username or chat_link.chat.id)
-            message = await client_telethon.get_messages(entity, ids=chat_link.message_id)
-        else:
-            return []
-
-        # Получаем ID пользователя по username или ID
-        target_user = None
-        if user_id_or_username.startswith('@'):
-            target_user = await client_telethon.get_entity(user_id_or_username)
-        else:
-            target_user = await client_telethon.get_entity(int(user_id_or_username))
-
-        # Собираем комментарии пользователя
-        comments = []
-        if hasattr(message, 'id'):  # Если это пост, парсим комментарии
-            replies = await client_telethon.get_messages(entity, limit=limit, reply_to=message.id)
-            for reply in replies:
-                if reply.sender_id == target_user.id:
-                    comments.append({
-                        'row_num': len(comments) + 1,
-                        'user_id': target_user.id,
-                        'username': target_user.username or "",
-                        'phone': getattr(target_user, 'phone', ""),
-                        'first_name': target_user.first_name or "",
-                        'last_name': target_user.last_name or ""
-                    })
-        else:  # Если это чат, парсим все сообщения пользователя
-            messages = await client_telethon.get_messages(entity, limit=limit)
-            for msg in messages:
-                if msg.sender_id == target_user.id:
-                    comments.append({
-                        'row_num': len(comments) + 1,
-                        'user_id': target_user.id,
-                        'username': target_user.username or "",
-                        'phone': getattr(target_user, 'phone', ""),
-                        'first_name': target_user.first_name or "",
-                        'last_name': target_user.last_name or ""
-                    })
-
-        return comments
-
-    except telethon_errors.RPCError as e:
-        print(f"Ошибка при парсинге комментариев: {str(e)}")
-        return []
-
-async def parse_user_chats(user_id_or_username, limit):
-    try:
-        # Получаем ID пользователя
-        target_user = None
-        if user_id_or_username.startswith('@'):
-            target_user = await client_telethon.get_entity(user_id_or_username)
-        else:
-            target_user = await client_telethon.get_entity(int(user_id_or_username))
-
-        # Получаем список чатов, где пользователь состоит
-        dialogs = await client_telethon.get_dialogs(limit=limit)
-        chats = []
-        for dialog in dialogs:
-            try:
-                participants = await client_telethon.get_participants(dialog.entity, limit=1)  # Проверка наличия пользователя
-                for participant in participants:
-                    if isinstance(participant, tl.types.User) and participant.id == target_user.id:
-                        chats.append({
-                            'row_num': len(chats) + 1,
-                            'user_id': target_user.id,
-                            'username': target_user.username or "",
-                            'phone': getattr(target_user, 'phone', ""),
-                            'first_name': target_user.first_name or "",
-                            'last_name': target_user.last_name or ""
-                        })
-                        break
-            except telethon_errors.RPCError as e:
-                print(f"Ошибка при проверке чата {dialog.entity.id}: {str(e)}")
-                continue
-
-        return chats
-
-    except telethon_errors.RPCError as e:
-        print(f"Ошибка при парсинге чатов пользователя: {str(e)}")
-        return []
-
-async def parse_auth_access(link, context):
-    user_id = context.user_data.get('user_id')
-    username = context.user_data.get('username', 'Без username')
-    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
-    texts = LANGUAGES[lang]
-    
-    try:
-        parts = link.split('/')
-        chat_id = parts[-2] if parts[-2].startswith('+') else f'@{parts[-2]}'
-        entity = await client_telethon.get_entity(chat_id)
-        if hasattr(entity, 'participants_count'):  # Проверка, является ли чат/канал
-            await update.message.reply_text(texts['auth_success'])
-            await log_to_channel(context, f"Доступ к закрытому чату {chat_id} успешно предоставлен для @{username}", username)
-        else:
-            await update.message.reply_text(texts['auth_error'])
-            await log_to_channel(context, f"Ошибка доступа к закрытому чату {chat_id} для @{username}", username)
-    except telethon_errors.RPCError as e:
-        await update.message.reply_text(texts['auth_error'])
-        await log_to_channel(context, f"Ошибка авторизации для @{username}: {str(e)}", username)
-
 # Сообщение "Подождите..."
 async def show_loading_message(message, context):
     user_id = context.user_data.get('user_id', message.from_user.id)
@@ -1001,26 +870,52 @@ async def show_loading_message(message, context):
                 pass
 
 # Сообщение "Ожидается поступление средств..."
-async def show_payment_pending(message, context):
+async def notify_payment_pending(message, context):
     user_id = context.user_data.get('user_id', message.from_user.id)
+    username = message.from_user.username or "Без username"
     lang = load_users().get(str(user_id), {}).get('language', 'Русский')
     texts = LANGUAGES[lang]
-    pending_message = await message.reply_text(texts['payment_pending'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['payment_update'], callback_data='update_payment')]]))
-    context.user_data['pending_message_id'] = pending_message.message_id
+    transaction_hash = context.user_data['transaction_hash']
     
-    dots = 1
-    while 'payment_done' not in context.user_data:
-        dots = (dots % 3) + 1
-        new_text = texts['payment_pending'] + "." * dots
-        try:
-            await context.bot.edit_message_text(
-                chat_id=message.chat_id,
-                message_id=pending_message.message_id,
-                text=new_text
-            )
-        except telegram_error.BadRequest:
-            break
-        await asyncio.sleep(1)
+    try:
+        # Уведомление пользователю о проверке
+        pending_message = await message.reply_text(
+            texts['payment_pending'],
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['payment_update'], callback_data='payment_understood')]])
+        )
+        context.user_data['pending_message_id'] = pending_message.message_id
+        
+        # Отправка хеша администратору
+        subscription = context.user_data['selected_subscription']
+        admin_message = await context.bot.send_message(
+            chat_id=ADMIN_IDS[0],  # Предполагаем, что первый ID в ADMIN_IDS — главный администратор
+            text=f"{texts['admin_payment_notification'].format(username=username, subscription_type=texts[f'subscription_{subscription}'])}\nХеш транзакции: {transaction_hash}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(texts['transaction_review'], url=f"https://tonviewer.com/transaction/{transaction_hash}")],
+                [InlineKeyboardButton(texts['reject_transaction'], callback_data=f'reject_payment_{user_id}_{transaction_hash}')]
+            ])
+        )
+        context.user_data['admin_message_id'] = admin_message.message_id
+        await log_to_channel(context, f"Пользователь @{username} отправил хеш транзакции {transaction_hash} для проверки", username)
+    except telegram_error.RetryAfter as e:
+        await asyncio.sleep(e.retry_after)
+        pending_message = await message.reply_text(
+            texts['payment_pending'],
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['payment_update'], callback_data='payment_understood')]])
+        )
+        context.user_data['pending_message_id'] = pending_message.message_id
+        
+        # Отправка хеша администратору
+        subscription = context.user_data['selected_subscription']
+        admin_message = await context.bot.send_message(
+            chat_id=ADMIN_IDS[0],  # Предполагаем, что первый ID в ADMIN_IDS — главный администратор
+            text=f"{texts['admin_payment_notification'].format(username=username, subscription_type=texts[f'subscription_{subscription}'])}\nХеш транзакции: {transaction_hash}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(texts['transaction_review'], url=f"https://tonviewer.com/transaction/{transaction_hash}")],
+                [InlineKeyboardButton(texts['reject_transaction'], callback_data=f'reject_payment_{user_id}_{transaction_hash}')]
+            ])
+        )
+        context.user_data['admin_message_id'] = admin_message.message_id
 
 # Обработка парсинга
 async def process_parsing(message, context):
@@ -1036,74 +931,35 @@ async def process_parsing(message, context):
     
     try:
         all_data = []
-        if context.user_data['parse_type'] == 'parse_user_comments':
-            chat_link = context.user_data.get('chat_link')
-            user_id_or_username = context.user_data.get('user_id_or_username')
-            limit = check_parse_limit(user_id, 15000, context)  # Максимальный лимит для платных
-            data = await parse_user_comments(chat_link, user_id_or_username, limit)
+        for link in context.user_data['links']:
+            try:
+                await client_telethon.get_entity(link.split('/')[-2] if context.user_data['parse_type'] == 'parse_post_commentators' else link)
+            except telethon_errors.ChannelPrivateError:
+                context.user_data['parsing_done'] = True
+                await message.reply_text(texts['no_access'].format(link=link))
+                context.user_data['parsing_in_progress'] = False
+                await log_to_channel(context, texts['no_access'].format(link=link), username)
+                return
+            except telethon_errors.RPCError as e:
+                context.user_data['parsing_done'] = True
+                await message.reply_text(texts['rpc_error'].format(e=str(e)))
+                context.user_data['parsing_in_progress'] = False
+                await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
+                return
+            
+            limit = check_parse_limit(user_id, context.user_data['limit'], context)
+            if context.user_data['parse_type'] == 'parse_authors':
+                data = await parse_commentators(link, limit)
+            elif context.user_data['parse_type'] == 'parse_participants':
+                data = await parse_participants(link, limit)
+            elif context.user_data['parse_type'] == 'parse_post_commentators':
+                data = await parse_post_commentators(link, limit)
+            elif context.user_data['parse_type'] == 'parse_phone_contacts':
+                data = await parse_phone_contacts(link, limit)
+            
             all_data.extend(data)
         
-        elif context.user_data['parse_type'] == 'parse_user_chats':
-            user_id_or_username = context.user_data.get('user_id_or_username')
-            limit = check_parse_limit(user_id, 15000, context)  # Максимальный лимит для платных
-            data = await parse_user_chats(user_id_or_username, limit)
-            all_data.extend(data)
-        
-        else:
-            for link in context.user_data['links']:
-                try:
-                    await client_telethon.get_entity(link.split('/')[-2] if context.user_data['parse_type'] in ['parse_post_commentators', 'parse_auth_access'] else link)
-                except telethon_errors.ChannelPrivateError:
-                    context.user_data['parsing_done'] = True
-                    await message.reply_text(texts['no_access'].format(link=link))
-                    context.user_data['parsing_in_progress'] = False
-                    await log_to_channel(context, texts['no_access'].format(link=link), username)
-                    return
-                except telethon_errors.RPCError as e:
-                    context.user_data['parsing_done'] = True
-                    await message.reply_text(texts['rpc_error'].format(e=str(e)))
-                    context.user_data['parsing_in_progress'] = False
-                    await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
-                    return
-                
-                limit = check_parse_limit(user_id, context.user_data['limit'], context)
-                if context.user_data['parse_type'] == 'parse_authors':
-                    data = await parse_commentators(link, limit)
-                elif context.user_data['parse_type'] == 'parse_participants':
-                    data = await parse_participants(link, limit)
-                elif context.user_data['parse_type'] == 'parse_post_commentators':
-                    data = await parse_post_commentators(link, limit)
-                elif context.user_data['parse_type'] == 'parse_phone_contacts':
-                    data = await parse_phone_contacts(link, limit)
-                elif context.user_data['parse_type'] == 'parse_auth_access':
-                    await parse_auth_access(link, context)
-                    context.user_data['parsing_done'] = True
-                    context.user_data['parsing_in_progress'] = False
-                    return
-                
-                all_data.extend(data)
-        
-        if context.user_data['parse_type'] in ['parse_user_comments', 'parse_user_chats']:
-            filtered_data = all_data
-            excel_file = await create_excel_in_memory(filtered_data)
-            if context.user_data['parse_type'] == 'parse_user_comments':
-                caption = texts['caption_user_comments']
-                success_message = f'🎈 Найдено {len(filtered_data)} комментариев пользователя!\nСпарсить ещё? 🎈'
-            else:
-                caption = "Вот ваш файл с чатами пользователя."
-                success_message = f'🎈 Найдено {len(filtered_data)} чатов пользователя!\nСпарсить ещё? 🎈'
-            
-            context.user_data['parsing_done'] = True
-            await message.reply_document(document=excel_file, filename=f"user_{context.user_data['parse_type']}.xlsx", caption=caption)
-            excel_file.close()
-            
-            update_user_data(user_id, message.from_user.full_name, context, requests=1)
-            await log_to_channel(context, f"Успешно спарсил {len(filtered_data)} записей для {context.user_data['parse_type']}", username)
-            
-            msg = await message.reply_text(success_message, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Продолжить", callback_data='continue')]]))
-            await context.bot.set_message_reaction(chat_id=message.chat_id, message_id=msg.message_id, reaction=["🎈"])
-        
-        elif context.user_data['parse_type'] == 'parse_phone_contacts':
+        if context.user_data['parse_type'] == 'parse_phone_contacts':
             filtered_data = all_data  # Без фильтров для номеров
             excel_file = await create_excel_in_memory(filtered_data)
             vcf_file = create_vcf_file(pd.DataFrame(filtered_data, columns=['row_num', 'user_id', 'username', 'phone', 'first_name', 'last_name']))
@@ -1227,146 +1083,136 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     limit_ok, hours_left = check_request_limit(user_id)
     if not limit_ok:
-        await query.message.reply_text(texts['limit_reached'].format(limit=5 if users[str(user_id)]['subscription']['type'] == 'Бесплатная' else 10, hours=hours_left))
+        try:
+            await query.message.reply_text(texts['limit_reached'].format(limit=5 if users[str(user_id)]['subscription']['type'] == 'Бесплатная' else 10, hours=hours_left))
+        except telegram_error.RetryAfter as e:
+            await asyncio.sleep(e.retry_after)
+            await query.message.reply_text(texts['limit_reached'].format(limit=5 if users[str(user_id)]['subscription']['type'] == 'Бесплатная' else 10, hours=hours_left))
         return
     
-    if query.data.startswith('lang_'):
-        lang = query.data.split('_')[1]
-        update_user_data(user_id, query.from_user.full_name, context, lang=lang)
-        await query.message.edit_text(LANGUAGES[lang]['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(LANGUAGES[lang]['subscribed'], callback_data='subscribed')]]))
-        await log_to_channel(context, f"Сменил язык на {lang} для @{username}", username)
-        return
-    
-    if query.data == 'subscribed':
-        menu_text, menu_markup = get_main_menu(user_id, context)
-        await query.message.edit_text(menu_text, reply_markup=menu_markup)
-        await log_to_channel(context, f"Пользователь @{username} начал работу", username)
-        return
-    
-    if query.data == 'identifiers':
-        await query.message.reply_text(texts['you_chose'].format(button="Идентификаторы"))
-        await query.message.reply_text(texts['identifiers'])
-        context.user_data['waiting_for_id'] = True
-        await log_to_channel(context, f"Пользователь @{username} запросил идентификаторы", username)
-        return
-    
-    if query.data == 'parser':
-        await query.message.reply_text(texts['you_chose'].format(button="Сбор данных / Парсер"))
-        subscription = users[str(user_id)]['subscription']
-        is_paid = subscription['type'].startswith('Платная')
-        keyboard = [
-            [InlineKeyboardButton("Авторов", callback_data='parse_authors')],
-            [InlineKeyboardButton("Участников", callback_data='parse_participants')],
-            [InlineKeyboardButton("Комментаторов поста", callback_data='parse_post_commentators')]
-        ]
-        if is_paid:
-            keyboard.extend([
-                [InlineKeyboardButton(texts['phone_contacts'], callback_data='parse_phone_contacts')],
-                [InlineKeyboardButton(texts['auth_access'], callback_data='parse_auth_access')],
-                [InlineKeyboardButton(texts['parse_user_comments'], callback_data='parse_user_comments')],
-                [InlineKeyboardButton("Чаты пользователя", callback_data='parse_user_chats')]
-            ])
-        await query.message.reply_text(texts['parser'], reply_markup=InlineKeyboardMarkup(keyboard))
-        await log_to_channel(context, f"Пользователь @{username} начал парсинг", username)
-        return
-    
-    if query.data == 'subscribe':
-        await query.message.reply_text(texts['you_chose'].format(button="Оформить подписку"))
-        keyboard = [
-            [InlineKeyboardButton(texts['subscription_1h'], callback_data='subscribe_1h')],
-            [InlineKeyboardButton(texts['subscription_3d'], callback_data='subscribe_3d')],
-            [InlineKeyboardButton(texts['subscription_7d'], callback_data='subscribe_7d')]
-        ]
-        await query.message.reply_text("Выберите подписку:", reply_markup=InlineKeyboardMarkup(keyboard))
-        await log_to_channel(context, f"Пользователь @{username} выбрал подписку", username)
-        return
-    
-    if query.data == 'requisites':
-        await query.message.reply_text(texts['you_chose'].format(button="Реквизиты"))
-        await query.message.reply_text(texts['requisites'].format(support=SUPPORT_USERNAME))
-        await log_to_channel(context, f"Пользователь @{username} запросил реквизиты", username)
-        return
-    
-    if query.data in ['parse_authors', 'parse_participants', 'parse_post_commentators', 'parse_phone_contacts', 'parse_auth_access', 'parse_user_comments', 'parse_user_chats']:
-        context.user_data['parse_type'] = query.data
-        await query.message.reply_text(texts['you_chose'].format(button={
-            'parse_authors': 'Авторов',
-            'parse_participants': 'Участников',
-            'parse_post_commentators': 'Комментаторов поста',
-            'parse_phone_contacts': texts['phone_contacts'],
-            'parse_auth_access': texts['auth_access'],
-            'parse_user_comments': texts['parse_user_comments'],
-            'parse_user_chats': "Чаты пользователя"
-        }[query.data]))
-        if query.data in ['parse_post_commentators', 'parse_auth_access', 'parse_user_comments']:
-            await query.message.reply_text(texts['user_comments_prompt'] if query.data == 'parse_user_comments' else texts['link_post'])
-        else:
-            await query.message.reply_text(texts['link_group'] if query.data in ['parse_authors', 'parse_participants', 'parse_phone_contacts'] else texts['user_id_prompt'])
-        await log_to_channel(context, f"Пользователь @{username} выбрал парсинг {query.data}", username)
-        return
-    
-    if query.data == 'continue':
-        menu_text, menu_markup = get_main_menu(user_id, context)
-        await query.message.reply_text(menu_text, reply_markup=menu_markup)
-        context.user_data.clear()
-        context.user_data['user_id'] = user_id
-        await log_to_channel(context, f"Пользователь @{username} продолжил работу", username)
-        return
-    
-    if query.data.startswith('limit_'):
-        if query.data == 'limit_custom':
-            context.user_data['waiting_for_limit'] = True
-            await query.message.reply_text(texts['you_chose'].format(button="Другое"))
-            await query.message.reply_text(f"Укажи своё число (максимум {15000 if users[str(user_id)]['subscription']['type'].startswith('Платная') else 150}):", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit')]]))
-        else:
-            context.user_data['limit'] = int(query.data.split('_')[1])
-            await query.message.reply_text(texts['you_chose'].format(button=query.data.split('_')[1]))
-            await ask_for_filters(query.message, context)
-        await log_to_channel(context, f"Пользователь @{username} установил лимит {context.user_data.get('limit', 'по умолчанию')}", username)
-        return
-    
-    if query.data == 'skip_limit':
-        context.user_data['limit'] = 1000
-        context.user_data.pop('waiting_for_limit', None)
-        await query.message.reply_text(texts['you_chose'].format(button="Пропустить"))
-        await ask_for_filters(query.message, context)
-        await log_to_channel(context, f"Пользователь @{username} пропустил лимит", username)
-        return
-    
-    if query.data == 'no_filter':
-        context.user_data['limit'] = 15000 if users[str(user_id)]['subscription']['type'].startswith('Платная') else 150
-        context.user_data['filters'] = {'only_with_username': False, 'exclude_bots': False, 'only_active': False}
-        await query.message.reply_text(texts['you_chose'].format(button=texts['no_filter']))
-        await process_parsing(query.message, context)
-        await log_to_channel(context, f"Пользователь @{username} выбрал парсинг без фильтров с лимитом {context.user_data['limit']}", username)
-        return
-    
-    if query.data in ['filter_yes', 'filter_no', 'skip_filters']:
-        filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False})
-        current_filter = context.user_data['current_filter']
-        if query.data == 'filter_yes':
-            filters[current_filter] = True
-            await query.message.reply_text(texts['you_chose'].format(button="Да"))
-        elif query.data == 'filter_no':
-            await query.message.reply_text(texts['you_chose'].format(button="Нет"))
-        else:
-            await query.message.reply_text(texts['you_chose'].format(button="Пропустить"))
+    try:
+        if query.data.startswith('lang_'):
+            lang = query.data.split('_')[1]
+            update_user_data(user_id, query.from_user.full_name, context, lang=lang)
+            await query.message.edit_text(LANGUAGES[lang]['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(LANGUAGES[lang]['subscribed'], callback_data='subscribed')]]))
+            await log_to_channel(context, f"Сменил язык на {lang} для @{username}", username)
         
-        if current_filter == 'only_with_username' and query.data != 'skip_filters':
-            context.user_data['current_filter'] = 'exclude_bots'
-            await query.message.reply_text(texts['filter_bots'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Да", callback_data='filter_yes'), InlineKeyboardButton("Нет", callback_data='filter_no')], [InlineKeyboardButton(texts['skip'], callback_data='skip_filters')]]))
-        elif current_filter == 'exclude_bots' and query.data != 'skip_filters':
-            context.user_data['current_filter'] = 'only_active'
-            await query.message.reply_text(texts['filter_active'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Да", callback_data='filter_yes'), InlineKeyboardButton("Нет", callback_data='filter_no')], [InlineKeyboardButton(texts['skip'], callback_data='skip_filters')]]))
-        else:
-            del context.user_data['waiting_for_filters']
-            del context.user_data['current_filter']
-            context.user_data['filters'] = filters
+        elif query.data == 'subscribed':
+            menu_text, menu_markup = get_main_menu(user_id, context)
+            await query.message.edit_text(menu_text, reply_markup=menu_markup)
+            await log_to_channel(context, f"Пользователь @{username} начал работу", username)
+        
+        elif query.data == 'identifiers':
+            await query.message.reply_text(texts['you_chose'].format(button="Идентификаторы"))
+            await query.message.reply_text(texts['identifiers'])
+            context.user_data['waiting_for_id'] = True
+            await log_to_channel(context, f"Пользователь @{username} запросил идентификаторы", username)
+        
+        elif query.data == 'parser':
+            await query.message.reply_text(texts['you_chose'].format(button="Сбор данных / Парсер"))
+            subscription = users[str(user_id)]['subscription']
+            is_paid = subscription['type'].startswith('Платная')
+            keyboard = [
+                [InlineKeyboardButton("Авторов", callback_data='parse_authors')],
+                [InlineKeyboardButton("Участников", callback_data='parse_participants')],
+                [InlineKeyboardButton("Комментаторов поста", callback_data='parse_post_commentators')]
+            ]
+            if is_paid:
+                keyboard.append([InlineKeyboardButton(texts['phone_contacts'], callback_data='parse_phone_contacts')])
+            await query.message.reply_text(texts['parser'], reply_markup=InlineKeyboardMarkup(keyboard))
+            await log_to_channel(context, f"Пользователь @{username} начал парсинг", username)
+        
+        elif query.data == 'subscribe':
+            await query.message.reply_text(texts['you_chose'].format(button="Оформить подписку"))
+            keyboard = [
+                [InlineKeyboardButton(texts['subscription_1h'], callback_data='subscribe_1h')],
+                [InlineKeyboardButton(texts['subscription_3d'], callback_data='subscribe_3d')],
+                [InlineKeyboardButton(texts['subscription_7d'], callback_data='subscribe_7d')]
+            ]
+            await query.message.reply_text("Выберите подписку:", reply_markup=InlineKeyboardMarkup(keyboard))
+            await log_to_channel(context, f"Пользователь @{username} выбрал подписку", username)
+        
+        elif query.data == 'requisites':
+            await query.message.reply_text(texts['you_chose'].format(button="Реквизиты"))
+            await query.message.reply_text(texts['requisites'].format(support=SUPPORT_USERNAME))
+            await log_to_channel(context, f"Пользователь @{username} запросил реквизиты", username)
+        
+        elif query.data in ['parse_authors', 'parse_participants', 'parse_post_commentators', 'parse_phone_contacts']:
+            context.user_data['parse_type'] = query.data
+            await query.message.reply_text(texts['you_chose'].format(button={
+                'parse_authors': 'Авторов',
+                'parse_participants': 'Участников',
+                'parse_post_commentators': 'Комментаторов поста',
+                'parse_phone_contacts': texts['phone_contacts']
+            }[query.data]))
+            if query.data == 'parse_post_commentators':
+                await query.message.reply_text(texts['link_post'])
+            else:
+                await query.message.reply_text(texts['link_group'])
+            await log_to_channel(context, f"Пользователь @{username} выбрал парсинг {query.data}", username)
+        
+        elif query.data == 'continue':
+            menu_text, menu_markup = get_main_menu(user_id, context)
+            await query.message.reply_text(menu_text, reply_markup=menu_markup)
+            context.user_data.clear()
+            context.user_data['user_id'] = user_id
+            await log_to_channel(context, f"Пользователь @{username} продолжил работу", username)
+        
+        elif query.data.startswith('limit_'):
+            if query.data == 'limit_custom':
+                context.user_data['waiting_for_limit'] = True
+                await query.message.reply_text(texts['you_chose'].format(button="Другое"))
+                await query.message.reply_text(f"Укажи своё число (максимум {15000 if users[str(user_id)]['subscription']['type'].startswith('Платная') else 150}):", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit')]]))
+            else:
+                context.user_data['limit'] = int(query.data.split('_')[1])
+                await query.message.reply_text(texts['you_chose'].format(button=query.data.split('_')[1]))
+                await ask_for_filters(query.message, context)
+            await log_to_channel(context, f"Пользователь @{username} установил лимит {context.user_data.get('limit', 'по умолчанию')}", username)
+        
+        elif query.data == 'skip_limit':
+            context.user_data['limit'] = 1000
+            context.user_data.pop('waiting_for_limit', None)
+            await query.message.reply_text(texts['you_chose'].format(button="Пропустить"))
+            await ask_for_filters(query.message, context)
+            await log_to_channel(context, f"Пользователь @{username} пропустил лимит", username)
+        
+        elif query.data == 'no_filter':
+            context.user_data['limit'] = 15000 if users[str(user_id)]['subscription']['type'].startswith('Платная') else 150
+            context.user_data['filters'] = {'only_with_username': False, 'exclude_bots': False, 'only_active': False}
+            await query.message.reply_text(texts['you_chose'].format(button=texts['no_filter']))
             await process_parsing(query.message, context)
-        await log_to_channel(context, f"Пользователь @{username} установил фильтры: {filters}", username)
-        return
-    
-    if query.data == 'fix_link':
+            await log_to_channel(context, f"Пользователь @{username} выбрал парсинг без фильтров с лимитом {context.user_data['limit']}", username)
+        
+        elif query.data in ['filter_yes', 'filter_no', 'skip_filters']:
+            filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False})
+            current_filter = context.user_data['current_filter']
+            if query.data == 'filter_yes':
+                filters[current_filter] = True
+                await query.message.reply_text(texts['you_chose'].format(button="Да"))
+            elif query.data == 'filter_no':
+                await query.message.reply_text(texts['you_chose'].format(button="Нет"))
+            else:
+                await query.message.reply_text(texts['you_chose'].format(button="Пропустить"))
+            
+            if current_filter == 'only_with_username' and query.data != 'skip_filters':
+                context.user_data['current_filter'] = 'exclude_bots'
+                await query.message.reply_text(texts['filter_bots'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Да", callback_data='filter_yes'), InlineKeyboardButton("Нет", callback_data='filter_no')], [InlineKeyboardButton(texts['skip'], callback_data='skip_filters')]]))
+            elif current_filter == 'exclude_bots' and query.data != 'skip_filters':
+                context.user_data['current_filter'] = 'only_active'
+                await query.message.reply_text(texts['filter_active'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Да", callback_data='filter_yes'), InlineKeyboardButton("Нет", callback_data='filter_no')], [InlineKeyboardButton(texts['skip'], callback_data='skip_filters')]]))
+            else:
+                del context.user_data['waiting_for_filters']
+                del context.user_data['current_filter']
+                context.user_data['filters'] = filters
+                await process_parsing(query.message, context)
+            await log_to_channel(context, f"Пользователь @{username} установил фильтры: {filters}", username)
+        
+        elif query.data == 'fix_link':
+            last_input = context.user_data.get('last_input', '')
+            if not last_input:
+                await query.message.reply_text(texts['retry_link'])
+                return
+                    if query.data == 'fix_link':
         last_input = context.user_data.get('last_input', '')
         if not last_input:
             await query.message.reply_text(texts['retry_link'])
@@ -1405,10 +1251,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data.startswith('info_'):
         info_texts = {
             'info_identifiers': texts['identifiers'],
-            'info_parser': "Доступен парсинг авторов, участников, комментаторов постов, комментариев пользователя и чатов пользователя с фильтрами и лимитами (макс. 15000 для платных, 150 для бесплатных)." if lang == 'Русский' else
-                          "Доступний парсинг авторів, учасників, коментаторів постів, коментарів користувача та чатів користувача з фільтрами та лімітами (макс. 15000 для платних, 150 для безкоштовних)." if lang == 'Украинский' else
-                          "Available parsing of authors, participants, post commentators, user comments, and user chats with filters and limits (max 15,000 for paid, 150 for free)." if lang == 'English' else
-                          "Verfügbares Parsen von Autoren, Teilnehmern, Beitragskommentatoren, Benutzerkommentaren und Benutzerchats mit Filtern und Limits (max. 15.000 für bezahlt, 150 für kostenlos).",
+            'info_parser': "Доступен парсинг авторов, участников и комментаторов постов с фильтрами и лимитами (макс. 15000 для платных, 150 для бесплатных)." if lang == 'Русский' else
+                          "Доступний парсинг авторів, учасників та коментаторів постів з фільтрами та лімітами (макс. 15000 для платних, 150 для безкоштовних)." if lang == 'Украинский' else
+                          "Available parsing of authors, participants, and post commentators with filters and limits (max 15,000 for paid, 150 for free)." if lang == 'English' else
+                          "Verfügbares Parsen von Autoren, Teilnehmern und Beitragskommentatoren mit Filtern und Limits (max. 15.000 für bezahlt, 150 für kostenlos).",
             'info_subscribe': "Подписка даёт доступ к дополнительным функциям (макс. 15000 пользователей). Свяжитесь с поддержкой для оплаты." if lang == 'Русский' else
                              "Підписка дає доступ до додаткових функцій (макс. 15000 користувачів). Зв’яжіться з підтримкою для оплати." if lang == 'Украинский' else
                              "Subscription gives access to additional features (max 15,000 users). Contact support for payment." if lang == 'English' else
@@ -1423,9 +1269,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data in ['subscribe_1h', 'subscribe_3d', 'subscribe_7d']:
         context.user_data['selected_subscription'] = query.data.replace('subscribe_', '')
         amount = {'1h': 2, '3d': 5, '7d': 7}[context.user_data['selected_subscription']]
-        await query.message.reply_text(texts['payment_wallet'].format(amount=amount, address=TON_WALLET_ADDRESS), reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(texts['payment_cancel'], callback_data='cancel_payment')],
-            [InlineKeyboardButton(texts['payment_paid'], callback_data='payment_paid')]
+        await query.message.reply_text(texts['payment_wallet'].format(amount=amount, address=TON_WALLET_ADDRESS))
+        await query.message.reply_text("После оплаты нажмите кнопку ниже:", reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton(texts['payment_paid'], callback_data='payment_paid')],
+            [InlineKeyboardButton(texts['payment_cancel'], callback_data='cancel_payment')]
         ]))
         await log_to_channel(context, f"Пользователь @{username} выбрал подписку: {context.user_data['selected_subscription']}", username)
         return
@@ -1442,9 +1289,29 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await log_to_channel(context, f"Пользователь @{username} указал, что оплатил подписку", username)
         return
     
-    if query.data == 'update_payment':
-        await check_payment_status(query.message, context)
-        await log_to_channel(context, f"Пользователь @{username} обновил информацию о платеже", username)
+    if query.data == 'payment_understood':
+        try:
+            await context.bot.delete_message(chat_id=query.message.chat_id, message_id=context.user_data['pending_message_id'])
+        except telegram_error.BadRequest:
+            pass
+        await log_to_channel(context, f"Пользователь @{username} подтвердил понимание проверки платежа", username)
+        return
+    
+    if query.data.startswith('reject_payment_'):
+        parts = query.data.split('_')
+        user_id = parts[2]
+        transaction_hash = parts[3]
+        lang = load_users().get(user_id, {}).get('language', 'Русский')
+        texts = LANGUAGES[lang]
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=texts['payment_invalid'].format(support=SUPPORT_USERNAME)
+        )
+        try:
+            await context.bot.delete_message(chat_id=query.message.chat_id, message_id=context.user_data.get('admin_message_id'))
+        except telegram_error.BadRequest:
+            pass
+        await log_to_channel(context, f"Администратор отклонил платеж пользователя {user_id} с хешем {transaction_hash}", username)
         return
     
     if query.data == 'logs_channel':
@@ -1458,8 +1325,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Основная функция
 async def main():
     await client_telethon.connect()
-    if not await client_telethon.is_user_authorized():
-        await client_telethon.start(phone=PHONE)
     print("Telethon клиент успешно запущен и подключён")
     
     application = Application.builder().token(BOT_TOKEN).build()
@@ -1471,6 +1336,9 @@ async def main():
     application.add_handler(CommandHandler("note", note))
     application.add_handler(CallbackQueryHandler(button))
     application.add_handler(MessageHandler(filters.TEXT | filters.FORWARDED, handle_message))
+    
+    # Обработчик ошибок для приложения
+    application.add_error_handler(lambda update, context: log_to_channel(context, f"Ошибка в приложении: {str(context.error)}"))
     
     await application.initialize()
     await application.start()
@@ -1484,6 +1352,7 @@ async def main():
             await asyncio.sleep(15)
         except Exception as e:
             print(f"Неизвестная ошибка: {e}. Завершение работы.")
+            await log_to_channel(None, f"Неизвестная ошибка в main: {str(e)}")
             break
     
     await application.updater.stop()
