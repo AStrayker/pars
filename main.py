@@ -1202,7 +1202,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data in ['subscribe_1h', 'subscribe_3d', 'subscribe_7d']:
         context.user_data['selected_subscription'] = query.data.replace('subscribe_', '')
         amount = {'1h': 2, '3d': 5, '7d': 7}[context.user_data['selected_subscription']]
-            await query.message.reply_text(texts['payment_wallet'].format(amount=amount, address=TON_WALLET_ADDRESS), parse_mode='Markdown')
+        await query.message.reply_text(
+            texts['payment_wallet'].format(amount=amount, address=TON_WALLET_ADDRESS),
+            parse_mode='Markdown'
+        )
         context.user_data['waiting_for_hash'] = True
         await log_to_channel(context, f"Пользователь @{username} выбрал подписку: {context.user_data['selected_subscription']}", username)
         return
@@ -1235,7 +1238,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if str(user_id) not in ADMIN_IDS:
             await query.message.reply_text("У вас нет доступа к этой функции.")
             return
-        await query.message.reply_text(texts['logs_channel'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Перейти в канал", url=f"https://t.me/{LOG_CHANNEL_ID.replace('-100', '')}")]]))
+        await query.message.reply_text(
+            texts['logs_channel'],
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Перейти в канал", url=f"https://t.me/{LOG_CHANNEL_ID.replace('-100', '')}")]])
+        )
         await log_to_channel(context, f"Администратор @{username} запросил канал с логами", username)
         return
 
