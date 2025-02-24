@@ -20,10 +20,10 @@ PHONE = '+380639678038'
 BOT_TOKEN = '7981019134:AAHGkn_2ACcS76NbtQDY7L7pAONIPmMSYoA'
 LOG_CHANNEL_ID = -1002342891238  # Уточните реальный ID
 SUBSCRIPTION_CHANNEL_ID = -1002425905138  # Уточните реальный ID
-SUPPORT_USERNAME = '@alex_strayker'
-TON_WALLET_ADDRESS = 'UQAP4wrP0Jviy03CTeniBjSnAL5UHvcMFtxyi1Ip1exl9pLu'  # Адрес кошелька TON
+SUPPORT_USERNAME = '@astrajker_cb_id'
+TON_WALLET_ADDRESS = '```UQAP4wrP0Jviy03CTeniBjSnAL5UHvcMFtxyi1Ip1exl9pLu```'  # Моноширинный адрес кошелька TON
 TON_API_KEY = 'YOUR_TON_API_KEY'  # Получите API ключ с toncenter.com
-ADMIN_IDS = ['2037127199']  # ID администратора (замените на ваш Telegram ID)
+ADMIN_IDS = ['2037127199', '380639678038']  # Добавлен ID без авторизации
 
 # Создание клиента Telethon
 client_telethon = TelegramClient('session_name', API_ID, API_HASH)
@@ -85,14 +85,13 @@ LANGUAGES = {
         'subscription_1h': 'Подписка на 1 час - 2 USDT (TON)',
         'subscription_3d': 'Подписка на 3 дня - 5 USDT (TON)',
         'subscription_7d': 'Подписка на 7 дней - 7 USDT (TON)',
-        'payment_wallet': 'Переведите {amount} USDT на кошелёк TON:\n{address}\nПосле оплаты нажмите "Я оплатил".',
-        'payment_cancel': 'Отменить',
-        'payment_paid': 'Я оплатил',
+        'payment_wallet': 'Переведите {amount} USDT на кошелёк TON:\n{address}\nПосле оплаты отправьте хеш транзакции.',
         'payment_hash': 'Отправьте хеш транзакции:',
-        'payment_pending': 'Ожидается поступление средств',
-        'payment_update': 'Обновить информацию',
-        'payment_success': 'Платёж успешно подтверждён! Ваша подписка активирована до {end_time}.',
-        'payment_error': 'Ошибка при проверке платежа: {error}',
+        'payment_processing': 'Ваша транзакция отправлена в обработку',
+        'payment_ok': 'Понятно',
+        'payment_rejected': 'Ваша транзакция не действительна.\nЗа помощью обратитесь к {support}',
+        'admin_payment_notification': 'Пользователь @{username} оплатил подписку "{sub_type}"\n[Просмотреть транзакцию](https://tonscan.org/tx/{hash})',
+        'reject_button': 'Отклонить',
         'entity_error': 'Не удалось получить информацию о пользователе. Пользователь может быть приватным или недоступным.',
         'no_filter': 'Не применять фильтр',
         'phone_contacts': 'Сбор номеров телефонов и ФИО',
@@ -144,14 +143,13 @@ LANGUAGES = {
         'subscription_1h': 'Підписка на 1 годину - 2 USDT (TON)',
         'subscription_3d': 'Підписка на 3 дні - 5 USDT (TON)',
         'subscription_7d': 'Підписка на 7 днів - 7 USDT (TON)',
-        'payment_wallet': 'Переведіть {amount} USDT на гаманець TON:\n{address}\nПісля оплати натисніть "Я оплатив".',
-        'payment_cancel': 'Скасувати',
-        'payment_paid': 'Я оплатив',
+        'payment_wallet': 'Переведіть {amount} USDT на гаманець TON:\n{address}\nПісля оплати надішліть хеш транзакції.',
         'payment_hash': 'Надішліть хеш транзакції:',
-        'payment_pending': 'Очікується надходження коштів',
-        'payment_update': 'Оновити інформацію',
-        'payment_success': 'Платіж успішно підтверджений! Ваша підписка активована до {end_time}.',
-        'payment_error': 'Помилка при перевірці платежу: {error}',
+        'payment_processing': 'Ваша транзакція відправлена в обробку',
+        'payment_ok': 'Зрозуміло',
+        'payment_rejected': 'Ваша транзакція не дійсна.\nЗа допомогою зверніться до {support}',
+        'admin_payment_notification': 'Користувач @{username} оплатив підписку "{sub_type}"\n[Переглянути транзакцію](https://tonscan.org/tx/{hash})',
+        'reject_button': 'Відхилити',
         'entity_error': 'Не вдалося отримати інформацію про користувача. Користувач може бути приватним або недоступним.',
         'no_filter': 'Не застосовувати фільтр',
         'phone_contacts': 'Збір номерів телефонів та ПІБ',
@@ -203,14 +201,13 @@ LANGUAGES = {
         'subscription_1h': '1 Hour Subscription - 2 USDT (TON)',
         'subscription_3d': '3 Days Subscription - 5 USDT (TON)',
         'subscription_7d': '7 Days Subscription - 7 USDT (TON)',
-        'payment_wallet': 'Transfer {amount} USDT to the TON wallet:\n{address}\nAfter payment, press "I Paid".',
-        'payment_cancel': 'Cancel',
-        'payment_paid': 'I Paid',
+        'payment_wallet': 'Transfer {amount} USDT to the TON wallet:\n{address}\nAfter payment, send the transaction hash.',
         'payment_hash': 'Send the transaction hash:',
-        'payment_pending': 'Awaiting funds transfer',
-        'payment_update': 'Update Information',
-        'payment_success': 'Payment successfully confirmed! Your subscription is activated until {end_time}.',
-        'payment_error': 'Error checking payment: {error}',
+        'payment_processing': 'Your transaction has been sent for processing',
+        'payment_ok': 'Understood',
+        'payment_rejected': 'Your transaction is invalid.\nFor assistance, contact {support}',
+        'admin_payment_notification': 'User @{username} paid for the "{sub_type}" subscription\n[View transaction](https://tonscan.org/tx/{hash})',
+        'reject_button': 'Reject',
         'entity_error': 'Could not retrieve user information. The user may be private or inaccessible.',
         'no_filter': 'Do not apply filter',
         'phone_contacts': 'Collect phone numbers and full names',
@@ -262,14 +259,13 @@ LANGUAGES = {
         'subscription_1h': '1 Stunde Abonnement - 2 USDT (TON)',
         'subscription_3d': '3 Tage Abonnement - 5 USDT (TON)',
         'subscription_7d': '7 Tage Abonnement - 7 USDT (TON)',
-        'payment_wallet': 'Überweise {amount} USDT auf den TON-Wallet:\n{address}\nNach der Zahlung drücke "Ich habe bezahlt".',
-        'payment_cancel': 'Abbrechen',
-        'payment_paid': 'Ich habe bezahlt',
+        'payment_wallet': 'Überweise {amount} USDT auf den TON-Wallet:\n{address}\nNach der Zahlung sende den Transaktionshash.',
         'payment_hash': 'Sende den Transaktionshash:',
-        'payment_pending': 'Warten auf Zahlungseingang',
-        'payment_update': 'Informationen aktualisieren',
-        'payment_success': 'Zahlung erfolgreich bestätigt! Dein Abonnement ist bis {end_time} aktiviert.',
-        'payment_error': 'Fehler bei der Zahlungsprüfung: {error}',
+        'payment_processing': 'Deine Transaktion wurde zur Verarbeitung gesendet',
+        'payment_ok': 'Verstanden',
+        'payment_rejected': 'Deine Transaktion ist ungültig.\nFür Hilfe kontaktiere {support}',
+        'admin_payment_notification': 'Benutzer @{username} hat für das "{sub_type}" Abonnement bezahlt\n[Transaktion ansehen](https://tonscan.org/tx/{hash})',
+        'reject_button': 'Ablehnen',
         'entity_error': 'Konnte keine Benutzerinformationen abrufen. Der Benutzer könnte privat oder nicht zugänglich sein.',
         'no_filter': 'Keinen Filter anwenden',
         'phone_contacts': 'Telefonnummern und vollständige Namen sammeln',
@@ -357,7 +353,6 @@ def check_parse_limit(user_id, limit):
     
     if subscription['type'].startswith('Платная') and subscription['end']:
         if datetime.fromisoformat(subscription['end']) < now:
-            # Автоматический переход на бесплатную подписку
             update_user_data(user_id, user.get('name', 'Неизвестно'), None, subscription={'type': 'Бесплатная', 'end': None})
             lang = user.get('language', 'Русский')
             texts = LANGUAGES[lang]
@@ -470,7 +465,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     username = update.effective_user.username or "Без username"
     name = update.effective_user.full_name
     users = load_users()
-    if str(user_id) not in users:
+    
+    if str(user_id) == '380639678038':
+        update_user_data(user_id, name, context, lang='Русский', subscription={'type': 'Платная (бессрочная)', 'end': None})
+        menu_text, menu_markup = get_main_menu(user_id, context)
+        await update.message.reply_text(menu_text, reply_markup=menu_markup)
+        await log_to_channel(context, f"Пользователь @{username} (ID: {user_id}) начал работу без авторизации", username)
+    elif str(user_id) not in users:
         await log_to_channel(context, LANGUAGES['Русский']['new_user'].format(username=username, user_id=user_id), username)
         keyboard = [
             [InlineKeyboardButton("Русский", callback_data='lang_Русский')],
@@ -519,26 +520,22 @@ async def set_plan(update: Update, context: ContextTypes.DEFAULT_TYPE):
         end_time = now + timedelta(days=duration)
     elif sub_type == '7d':
         end_time = now + timedelta(days=duration)
-    elif sub_type == 'permanent':  # Бессрочная подписка для админов
-        end_time = None  # Бессрочная подписка — end_time None
+    elif sub_type == 'permanent':
+        end_time = None
     else:
-        await update.message.reply_text("Неверный тип подписки. Используйте '1h', '3d', '7d' или 'permanent' для админов.")
+        await update.message.reply_text("Неверный тип подписки. Используйте '1h', '3d', '7d' или 'permanent'.")
         return
     
-    # Обновляем данные пользователя
     subscription_type = f'Платная ({sub_type})' if sub_type in ['1h', '3d', '7d'] else 'Платная (бессрочная)'
     update_user_data(target_user_id, "Имя пользователя", context, subscription={'type': subscription_type, 'end': end_time.isoformat() if end_time else None})
     
-    # Получаем имя пользователя для уведомления
     username = load_users().get(str(target_user_id), {}).get('name', 'Неизвестно')
     lang = load_users().get(str(target_user_id), {}).get('language', 'Русский')
     texts = LANGUAGES[lang]
     
-    # Уведомление пользователю
-    notification = texts['payment_success'].format(end_time=end_time.strftime('%Y-%m-%d %H:%M:%S') if end_time else 'бессрочно')
+    notification = texts['payment_processing'] + f"\nВаша подписка активирована до {end_time.strftime('%Y-%m-%d %H:%M:%S') if end_time else 'бессрочно'}."
     await context.bot.send_message(chat_id=target_user_id, text=f"🎉 {notification}")
     
-    # Сообщение администратору
     await update.message.reply_text(f"Подписка для пользователя {target_user_id} ({username}) обновлена до {end_time.strftime('%Y-%m-%d %H:%M:%S') if end_time else 'бессрочно'}.")
     await log_to_channel(context, f"Администратор установил подписку для пользователя {target_user_id} ({username}): {sub_type}, до {end_time if end_time else 'бессрочно'}", "Администратор")
 
@@ -609,7 +606,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 msg = await update.message.reply_text(texts['id_result'].format(id=entity.id), reply_markup=InlineKeyboardMarkup([
                     [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
                 ]))
-                await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=["🎉"])
+                await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=[{"type": "emoji", "emoji": "👍"}])
             except telethon_errors.RPCError as e:
                 await update.message.reply_text(texts['rpc_error'].format(e=str(e)))
                 await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
@@ -618,14 +615,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             msg = await update.message.reply_text(texts['id_result'].format(id=chat_id), reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
             ]))
-            await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=["🎉"])
+            await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=[{"type": "emoji", "emoji": "👍"}])
             await log_to_channel(context, f"Получен ID чата: {chat_id}", username)
         elif update.message.forward_origin and hasattr(update.message.forward_origin, 'sender_user'):
             user_id_forward = update.message.forward_origin.sender_user.id
             msg = await update.message.reply_text(texts['id_result'].format(id=user_id_forward), reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
             ]))
-            await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=["🎉"])
+            await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=[{"type": "emoji", "emoji": "👍"}])
             await log_to_channel(context, f"Получен ID пользователя: {user_id_forward}", username)
         elif text.startswith('https://t.me/'):
             try:
@@ -636,7 +633,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     msg = await update.message.reply_text(texts['id_result'].format(id=entity.id), reply_markup=InlineKeyboardMarkup([
                         [InlineKeyboardButton(texts['close'], callback_data='close_id'), InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
                     ]))
-                    await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=["🎉"])
+                    await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=[{"type": "emoji", "emoji": "👍"}])
                     await log_to_channel(context, f"Получен ID через ссылку: {entity.id}", username)
                 else:
                     await update.message.reply_text("Отправь корректную ссылку!")
@@ -673,7 +670,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if 'waiting_for_hash' in context.user_data:
         context.user_data['transaction_hash'] = text
         del context.user_data['waiting_for_hash']
-        await check_payment_status(update.message, context)
+        await process_transaction(update.message, context)
         return
 
     if 'parse_type' in context.user_data:
@@ -725,6 +722,26 @@ async def ask_for_filters(message, context):
     context.user_data['current_filter'] = 'only_with_username'
     context.user_data['filters'] = {'only_with_username': False, 'exclude_bots': False, 'only_active': False}
     await message.reply_text(texts['filter_username'], reply_markup=InlineKeyboardMarkup(keyboard))
+
+# Обработка транзакции
+async def process_transaction(message, context):
+    user_id = context.user_data.get('user_id', message.from_user.id)
+    username = message.from_user.username or "Без username"
+    lang = load_users()[str(user_id)]['language']
+    texts = LANGUAGES[lang]
+    transaction_hash = context.user_data['transaction_hash']
+    sub_type = context.user_data['selected_subscription']
+    
+    keyboard = [[InlineKeyboardButton(texts['payment_ok'], callback_data='payment_ok')]]
+    await message.reply_text(texts['payment_processing'], reply_markup=InlineKeyboardMarkup(keyboard))
+    
+    admin_msg = await context.bot.send_message(
+        chat_id=LOG_CHANNEL_ID,
+        text=texts['admin_payment_notification'].format(username=username, sub_type=sub_type, hash=transaction_hash),
+        parse_mode='Markdown',
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['reject_button'], callback_data=f'reject_{user_id}_{transaction_hash}')]])
+    )
+    context.user_data['admin_msg_id'] = admin_msg.message_id
 
 # Функции парсинга
 async def parse_commentators(group_link, limit):
@@ -813,7 +830,7 @@ async def parse_phone_contacts(group_link, limit):
                 participant.username if participant.username else "",
                 participant.first_name if participant.first_name else "",
                 participant.last_name if participant.last_name else "",
-                participant.phone,  # Добавляем номер телефона
+                participant.phone,
                 participant
             ])
     return data
@@ -828,7 +845,7 @@ async def parse_auth_access(link, context):
         parts = link.split('/')
         chat_id = parts[-2] if parts[-2].startswith('+') else f'@{parts[-2]}'
         entity = await client_telethon.get_entity(chat_id)
-        if hasattr(entity, 'participants_count'):  # Проверка, является ли чат/канал
+        if hasattr(entity, 'participants_count'):
             await update.message.reply_text(texts['auth_success'])
             await log_to_channel(context, f"Доступ к закрытому чату {chat_id} успешно предоставлен для @{username}", username)
         else:
@@ -870,28 +887,6 @@ async def show_loading_message(message, context):
                 )
             except telegram_error.BadRequest:
                 pass
-
-# Сообщение "Ожидается поступление средств..."
-async def show_payment_pending(message, context):
-    user_id = context.user_data.get('user_id', message.from_user.id)
-    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
-    texts = LANGUAGES[lang]
-    pending_message = await message.reply_text(texts['payment_pending'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['payment_update'], callback_data='update_payment')]]))
-    context.user_data['pending_message_id'] = pending_message.message_id
-    
-    dots = 1
-    while 'payment_done' not in context.user_data:
-        dots = (dots % 3) + 1
-        new_text = texts['payment_pending'] + "." * dots
-        try:
-            await context.bot.edit_message_text(
-                chat_id=message.chat_id,
-                message_id=pending_message.message_id,
-                text=new_text
-            )
-        except telegram_error.BadRequest:
-            break
-        await asyncio.sleep(1)
 
 # Обработка парсинга
 async def process_parsing(message, context):
@@ -941,7 +936,7 @@ async def process_parsing(message, context):
             all_data.extend(data)
         
         if context.user_data['parse_type'] == 'parse_phone_contacts':
-            filtered_data = all_data  # Без фильтров для номеров
+            filtered_data = all_data
             excel_file = await create_excel_in_memory(filtered_data)
             vcf_file = create_vcf_file(pd.DataFrame(filtered_data, columns=['ID', 'Username', 'First Name', 'Last Name', 'Phone', 'Nickname']))
             
@@ -978,7 +973,7 @@ async def process_parsing(message, context):
             await log_to_channel(context, f"Успешно спарсил {count} записей из {chat_title}", username)
             
             msg = await message.reply_text(success_message, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Продолжить", callback_data='continue')]]))
-            await context.bot.set_message_reaction(chat_id=message.chat_id, message_id=msg.message_id, reaction=["🎈"])
+            await context.bot.set_message_reaction(chat_id=message.chat_id, message_id=msg.message_id, reaction=[{"type": "emoji", "emoji": "👍"}])
     
     except telethon_errors.FloodWaitError as e:
         context.user_data['parsing_done'] = True
@@ -992,55 +987,6 @@ async def process_parsing(message, context):
         await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
     finally:
         context.user_data['parsing_in_progress'] = False
-
-# Проверка статуса платежа
-async def check_payment_status(message, context):
-    user_id = context.user_data.get('user_id', message.from_user.id)
-    username = message.from_user.username or "Без username"
-    lang = load_users()[str(user_id)]['language']
-    texts = LANGUAGES[lang]
-    transaction_hash = context.user_data['transaction_hash']
-    
-    try:
-        headers = {'Authorization': f'Bearer {TON_API_KEY}'}
-        response = requests.get(f'https://toncenter.com/api/v2/getTransactions?address={TON_WALLET_ADDRESS}&limit=10', headers=headers)
-        response.raise_for_status()
-        transactions = response.json().get('result', [])
-        
-        for tx in transactions:
-            if tx.get('hash') == transaction_hash:
-                amount = float(tx.get('amount', 0)) / 10**9  # Конвертация из наностейнов в USDT
-                subscription = context.user_data['selected_subscription']
-                expected_amount = {'1h': 2, '3d': 5, '7d': 7}[subscription]
-                
-                if amount >= expected_amount:
-                    now = datetime.now()
-                    if subscription == '1h':
-                        end_time = now + timedelta(hours=1)
-                    elif subscription == '3d':
-                        end_time = now + timedelta(days=3)
-                    else:  # subscription == '7d'
-                        end_time = now + timedelta(days=7)
-                    update_user_data(user_id, message.from_user.full_name, context, subscription={'type': f'Платная ({subscription})', 'end': end_time.isoformat()})
-                    await message.reply_text(texts['payment_success'].format(end_time=end_time.strftime('%Y-%m-%d %H:%M:%S')))
-                    await log_to_channel(context, f"Оплата успешно подтверждена для @{username}. Подписка: {subscription}, до {end_time}", username)
-                    context.user_data['payment_done'] = True
-                    try:
-                        await context.bot.delete_message(chat_id=message.chat_id, message_id=context.user_data['pending_message_id'])
-                    except telegram_error.BadRequest:
-                        pass
-                    return
-                else:
-                    await message.reply_text(texts['payment_error'].format(error='Недостаточная сумма'))
-                    await log_to_channel(context, f"Ошибка оплаты для @{username}: Недостаточная сумма", username)
-                    return
-        
-        await message.reply_text(texts['payment_error'].format(error='Транзакция не найдена'))
-        await log_to_channel(context, f"Ошибка оплаты для @{username}: Транзакция не найдена", username)
-        
-    except requests.RequestException as e:
-        await message.reply_text(texts['payment_error'].format(error=str(e)))
-        await log_to_channel(context, f"Ошибка проверки платежа для @{username}: {str(e)}", username)
 
 # Обработчик кнопок
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1256,28 +1202,33 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data in ['subscribe_1h', 'subscribe_3d', 'subscribe_7d']:
         context.user_data['selected_subscription'] = query.data.replace('subscribe_', '')
         amount = {'1h': 2, '3d': 5, '7d': 7}[context.user_data['selected_subscription']]
-        await query.message.reply_text(texts['payment_wallet'].format(amount=amount, address=TON_WALLET_ADDRESS), reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(texts['payment_cancel'], callback_data='cancel_payment')],
-            [InlineKeyboardButton(texts['payment_paid'], callback_data='payment_paid')]
-        ]))
+            await query.message.reply_text(texts['payment_wallet'].format(amount=amount, address=TON_WALLET_ADDRESS), parse_mode='Markdown')
+        context.user_data['waiting_for_hash'] = True
         await log_to_channel(context, f"Пользователь @{username} выбрал подписку: {context.user_data['selected_subscription']}", username)
         return
     
-    if query.data == 'cancel_payment':
-        context.user_data.clear()
-        await query.message.reply_text("Оплата отменена.")
-        await log_to_channel(context, f"Пользователь @{username} отменил оплату", username)
+    if query.data == 'payment_ok':
+        await query.message.edit_reply_markup(reply_markup=None)  # Удаляем кнопку "Понятно"
+        menu_text, menu_markup = get_main_menu(user_id, context)
+        await query.message.reply_text(menu_text, reply_markup=menu_markup)
+        await log_to_channel(context, f"Пользователь @{username} подтвердил обработку транзакции", username)
         return
     
-    if query.data == 'payment_paid':
-        await query.message.reply_text(texts['payment_hash'])
-        context.user_data['waiting_for_hash'] = True
-        await log_to_channel(context, f"Пользователь @{username} указал, что оплатил подписку", username)
-        return
-    
-    if query.data == 'update_payment':
-        await check_payment_status(query.message, context)
-        await log_to_channel(context, f"Пользователь @{username} обновил информацию о платеже", username)
+    if query.data.startswith('reject_'):
+        parts = query.data.split('_')
+        rejected_user_id = parts[1]
+        transaction_hash = parts[2]
+        if str(user_id) not in ADMIN_IDS:
+            await query.message.reply_text("У вас нет прав для этого действия.")
+            return
+        lang_rejected = load_users().get(rejected_user_id, {}).get('language', 'Русский')
+        texts_rejected = LANGUAGES[lang_rejected]
+        await context.bot.send_message(
+            chat_id=rejected_user_id,
+            text=texts_rejected['payment_rejected'].format(support=SUPPORT_USERNAME)
+        )
+        await query.message.edit_reply_markup(reply_markup=None)  # Удаляем кнопку "Отклонить"
+        await log_to_channel(context, f"Администратор @{username} отклонил транзакцию {transaction_hash} пользователя ID {rejected_user_id}", username)
         return
     
     if query.data == 'logs_channel':
