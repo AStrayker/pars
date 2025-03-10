@@ -740,7 +740,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     limit_ok, hours_left = check_request_limit(user_id)
     if not limit_ok:
-        await update.message.reply_text(texts['limit_reached'].format(limit=5 if users[strSorry about that, something didn't go as planned. Please try again, and if you're still seeing this message, go ahead and restart the app.
+await context.bot.send_message(chat_id=user_id, text=texts['limit_reached'].format(limit=limit, hours=hours_left))
             await context.bot.send_message(chat_id=target_user_id, text=notification)
     await update.message.reply_text(f"Подписка для пользователя {target_user_id} ({username}) установлена: {subscription_type}, до {end_time if end_time else 'бессрочно'}.")
     await log_to_channel(context, f"Админ {user_id} установил подписку для {username} ({target_user_id}): {subscription_type}, до {end_time if end_time else 'бессрочно'}")
