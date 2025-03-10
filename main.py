@@ -678,170 +678,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     users = load_users()
     text = update.message.text.strip() if update.message.text else ""
 
-    client = context.user_data.get('client') or await get_telethon_client(user_id)  # Используем сохранённый клиент или создаём новый
+    client = await get_telethon_client(user_id)  # Получаем клиент для конкретного пользователя
     try:
         await client.connect()
-        if not await client.is_user_authorized():
-            if not context.user_data.get('waiting_for_phone'):
-                await update.message.reply_text(LANGUAGES['Русский']['enter_phone'])
-                context.user_data['waiting_for_phone'] = True
-                context.user_data['client'] = client
-                return
-    except telethon_errors.RPCError as e:
-        await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-        await log_to_channel(context, f"Ошибка подключения для {name} (@{username}): {str(e)}", username)
-        print(f"Ошибка подключения Telethon: {str(e)}\n{traceback.format_exc()}")
-        return
-    except Exception as e:
-        print(f"Неизвестная ошибка подключения Telethon: {str(e)}\n{traceback.format_exc()}")
-        return
-
-    if context.user_data.get('waiting_for_phone'):
-        if not text.startswith('+'):
-            await update.message.reply_text("Пожалуйста, введите номер в формате +380639678038:")
-            await client.disconnect()
-            return
-        context.user_data['phone'] = text
-        try:
-            await client.send_code_request(text)
-            await update.message.reply_text(LANGUAGES['Русский']['enter_code'])
-            context.user_data['waiting_for_code'] = True
-            del context.user_data['waiting_for_phone']
-            await log_to_channel(context, f"Номер телефона {name} (@{username}): {text}", username)
-            session_data = client.session.save()
-            await save_session_to_firebase(user_id, session_data)
-        except telethon_errors.RPCError as e:
-            await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-            await log_to_channel(context, f"Ошибка ввода номера {name} (@{username}): {str(e)}", username)
-            print(f"Ошибка при запросе кода: {str(e)}\n{traceback.format_exc()}")
-        finally:
-            await client.disconnect()
-        return
-
-    if context.user_data.get('waiting_for_code'):
-        try:
-            await client.sign_in(context.user_data['phone'], text)
-            await update.message.reply_text(LANGUAGES['Русский']['auth_success'])
-            del context.user_data['waiting_for_code']
-            await log_to_channel(context, f"Успешная авторизация {name} (@{username})", username)
-            keyboard = [
-                [InlineKeyboardButton("Русский", callback_data='lang_Русский')],
-                [InlineKeyboardButton("Украинский", callback_data='lang_Украинский')],
-                [InlineKeyboardButton("English", callback_data='lang_English')],
-                [InlineKeyboardButton("Deutsch", callback_data='lang_Deutsch')]
-            ]
-            await update.message.reply_text(LANGUAGES['Русский']['welcome'], reply_markup=InlineKeyboardMarkup(keyboard))
-            session_data = client.session.save()
-            await save_session_to_firebase(user_id, session_data)
-        except telethon_errors.SessionPasswordNeededError:
-            await update.message.reply_text(LANGUAGES['Русский']['enter_password'])
-            context.user_data['waiting_for_password'] = True
-            del context.user_data['waiting_for_code']
-            await log_to_channel(context, f"Запрос пароля 2FA у {name} (@{username})", username)
-        except telethon_errors.RPCError as e:
-            await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-            await log_to_channel(context, f"Ошибка ввода кода {name} (@{username}): {str(e)}", username)
-            print(f"Ошибка при вводе кода: {str(e)}\n{traceback.format_exc()}")
-        finally:
-            await client.disconnect()
-        return
-
-    if context.user_data.get('waiting_for_password'):
-        try:
-            await client.sign_in(password=text)
-            await update.message.reply_text(LANGUAGES['Русский']['auth_success'])
-            del context.user_data['waiting_for_password']
-            await log_to_channel(context, f"Успешная авторизация с 2FA {name} (@{username})", username)
-            keyboard = [
-                [InlineKeyboardButton("Русский", callback_data='lang_Русский')],
-                [InlineKeyboardButton("Украинский", callback_data='lang_Украинский')],
-                [InlineKeyboardButton("English", callback_data='lang_English')],
-                [InlineKeyboardButton("Deutsch", callback_data='lang_Deutsch')]
-            ]
-            await update.message.reply_text(LANGUAGES['Русский']['welcome'], reply_markup=InlineKeyboardMarkup(keyboard))
-            session_data = client.session.save()
-            await save_session_to_firebase(user_id, session_data)
-        except telethon_errors.RPCError as e:
-            await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-            await log_to_channel(context, f"Ошибка ввода пароля 2FA {name} (@{username}): {str(e)}", username)
-            print(f"Ошибка при вводе пароля 2FA: {str(e)}\n{traceback.format_exc()}")
-        finally:
-            await client.disconnect()
-        return
-
-    if str(user_id) not in users or 'language' not in users[str(user_id)]:
-        await client.disconnect()
-        return
-    
-    lang = users[str(user_id)]['language']
-    texts = LANGUAGES[lang]
-    
-    if context.user_data.get('parsing_in_progress', False):
-        await client.disconnect()
-        return
-    
-    limit_ok, hours_left = check_request_limit(user_id)
-    if not limit_ok:
-        await update.message.reply_text(texts['limit_reached'].format(limit=5 if users[str(user_id)]['subscription']['type'] == 'Бесплатная' else 10, hours=hours_left))
-        await client.disconnect()
-        return
-    
-    if text.startswith('/note '):
-        await note(update, context)
-        await client.disconnect()
-        return
-    
-    if 'waiting_for_hash' in context.user_data:
-        context.user_data['transaction_hash'] = text
-        del context.user_data['waiting_for_hash']
-        for admin_id in ADMIN_IDS:
-            try:
-                await context.bot.send_message(
-                    chat_id=admin_id,
-                    text=f"Пользователь {name} (@{username}) (ID: {user_id}) отправил хэш транзакции:\n{text}",
-                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Отклонить", callback_data=f'reject_{user_id}')]])
-                )
-            except telegram_error.BadRequest as e:
-                print(f"Ошибка отправки хэша администратору {admin_id}: {e}")
-        await log_to_channel(context, f"Хэш транзакции от {name} (@{username}): {text}", username)
-        await update.message.reply_text(texts['payment_pending'])
-        await client.disconnect()
-        return
-
-    if 'waiting_for_id' in context.user_data:
-        if text.startswith('@'):
-            try:
-                entitySorry about that, something didn't go as planned. Please try again, and if you're still seeing this message, go ahead and restart the app.
-                # Обработчик команды /note (продолжение)
-async def note(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    username = update.effective_user.username
-    name = update.effective_user.full_name or "Без имени"
-    if not context.args:
-        await update.message.reply_text("Использование: /note <текст>")
-        return
-    note_text = " ".join(context.args)
-    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
-    await log_to_channel(context, f"Заметка от {name} (@{username}): {note_text}", username)
-    await update.message.reply_text(LANGUAGES[lang]['note_cmd'])
-
-# Обработчик текстовых сообщений
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    context.user_data['user_id'] = user_id
-    username = update.effective_user.username
-    name = update.effective_user.full_name or "Без имени"
-    users = load_users()
-    text = update.message.text.strip() if update.message.text else ""
-
-    client = context.user_data.get('client') or await get_telethon_client(user_id)
-    try:
-        await client.connect()
-        if not await client.is_user_authorized() and not context.user_data.get('waiting_for_phone'):
-            await update.message.reply_text(LANGUAGES['Русский']['enter_phone'])
-            context.user_data['waiting_for_phone'] = True
-            context.user_data['client'] = client
-            await log_to_channel(context, f"Запрос номера телефона у {name} (@{username})", username)
+        if not await client.is_user_authorized():  # Проверяем авторизацию
+            await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error="Не авторизован. Начните с /start"))
+            await log_to_channel(context, f"Пользователь {name} (@{username}) не авторизован", username)
             return
     except telethon_errors.RPCError as e:
         await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
@@ -862,6 +704,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await client.send_code_request(text)
             await update.message.reply_text(LANGUAGES['Русский']['enter_code'])
             context.user_data['waiting_for_code'] = True
+            context.user_data['client'] = client  # Сохраняем клиент для дальнейшего использования
             del context.user_data['waiting_for_phone']
             await log_to_channel(context, f"Номер телефона {name} (@{username}): {text}", username)
             session_data = client.session.save()
@@ -1262,18 +1105,18 @@ async def process_parsing(message, context):
     texts = LANGUAGES[lang]
     subscription = users[str(user_id)]['subscription']
     
+    client = await get_telethon_client(user_id)  # Получаем клиент для пользователя
     context.user_data['parsing_in_progress'] = True
     asyncio.create_task(show_loading_message(message, context))
     
-    client = await get_telethon_client(user_id)
     try:
         await client.connect()
         if not await client.is_user_authorized():
-            await message.reply_text(texts['auth_error'].format(error="Не авторизован. Используйте /start для авторизации."))
+            await message.reply_text(texts['auth_error'].format(error="Не авторизован. Начните с /start"))
             context.user_data['parsing_done'] = True
             context.user_data['parsing_in_progress'] = False
             return
-        
+
         all_data = []
         for link in context.user_data['links']:
             try:
