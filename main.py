@@ -38,7 +38,7 @@ with open('serviceAccountKey.json', 'w') as f:
     json.dump(service_account_data, f)
 cred = credentials.Certificate('serviceAccountKey.json')
 initialize_app(cred, {
-    'databaseURL': os.environ.get('FIREBASE_DATABASE_URL', 'https://your-project-id-default-rtdb.firebaseio.com')
+    'databaseURL': os.environ.get('FIREBASE_DATABASE_URL', 'https://tgparser-f857c-default-rtdb.firebaseio.com')
 })
 
 # База данных пользователей
