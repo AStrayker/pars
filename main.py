@@ -1207,28 +1207,33 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             lang = query.data.split('_')[1]
             update_user_data(user_id, name, context, lang=lang)
             await query.edit_message_text(
-                texts['subscribe'],
+                texts['subscribe'],  # Оставляем сообщение о подписке как информационное
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]])
             )
             await log_to_channel(context, f"Выбор языка: {lang}", username)
         
         elif query.data == 'subscribed':
-            try:
-                member = await context.bot.get_chat_member(SUBSCRIPTION_CHANNEL_ID, user_id)
-                if member.status in ['member', 'administrator', 'creator']:
-                    message, reply_markup = get_main_menu(user_id, context)
-                    await query.edit_message_text(message, reply_markup=reply_markup)
-                    await log_to_channel(context, f"Пользователь подписан и перешел в главное меню", username)
-                else:
-                    await query.edit_message_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]]))
-            except telegram_error.BadRequest:
-                await query.edit_message_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]]))
+            # Убираем проверку подписки и сразу переходим в главное меню
+            message, reply_markup = get_main_menu(user_id, context)
+            await query.edit_message_text(message, reply_markup=reply_markup)
+            await log_to_channel(context, f"Пользователь перешел в главное меню без проверки подписки", username)
         
         elif query.data == 'update_menu':
             message, reply_markup = get_main_menu(user_id, context)
             await query.edit_message_text(message, reply_markup=reply_markup)
         
         elif query.data == 'identifiers':
+            await query.edit_message_text(
+                texts['identifiers'],
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='update_menu')]])
+            )
+            context.user_data['waiting_for_id'] = True
+        
+        elif query.data == 'close_id':
+            message, reply_markup = get_main_menu(user_id, context)
+            await query.edit_message_text(message, reply_markup=reply_markup)
+        
+        elif query.data == 'continue_id':
             await query.edit_message_text(
                 texts['identifiers'],
                 reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='update_menu')]])
