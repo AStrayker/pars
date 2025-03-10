@@ -1,0 +1,9 @@
+  https://console.firebase.google.com/
+apiKey: "AIzaSyC3TIHHwmTjY_Hu90uf9Ka988wE1kz5-Rk",
+  authDomain: "tgparser-f857c.firebaseapp.com",
+  databaseURL: "https://tgparser-f857c-default-rtdb.firebaseio.com",
+  projectId: "tgparser-f857c",
+  storageBucket: "tgparser-f857c.firebasestorage.app",
+  messagingSenderId: "531373856748",
+  appId: "1:531373856748:web:3a7120ec788e3c530152c9",
+  measurementId: "G-G52LLQ1B5J"
