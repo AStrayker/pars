@@ -58,7 +58,8 @@ def save_users(users):
 async def save_session_to_firebase(user_id, session_data):
     try:
         ref = db.reference(f'sessions/{user_id}')
-        session_key = datetime.now().isoformat().replace(':', '-')  # Уникальный ключ сессии
+        # Формируем безопасный ключ, убирая недопустимые символы
+        session_key = datetime.now().isoformat().replace(':', '-').replace('.', '-')  # "2025-03-10T18-26-29-622533"
         ref.child(session_key).set({
             'session_data': session_data,
             'timestamp': datetime.now().isoformat()
