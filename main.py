@@ -7,6 +7,7 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Mess
 from telethon import TelegramClient, errors as telethon_errors
 from telethon import tl
 from telethon.sessions import StringSession
+from telethon.network import ConnectionTcpFull
 from telegram import error as telegram_error
 from datetime import datetime, timedelta
 import json
@@ -15,6 +16,8 @@ import pandas as pd
 import requests
 import vobject
 from firebase_admin import credentials, initialize_app, db
+from faker import Faker
+import random
 
 # Переменные
 API_ID = int(os.environ.get('API_ID', 25281388))
@@ -83,13 +86,60 @@ async def load_session_from_firebase(user_id):
         print(f"Ошибка при загрузке сессии из Firebase: {str(e)}\n{traceback.format_exc()}")
         return None
 
-# Создание клиента Telethon
+# Генерация случайных данных устройства
+fake = Faker()
+def get_random_device_details():
+    devices = ["iPhone 12", "iPhone 13", "iPhone 14", "iPhone SE", "Samsung Galaxy S21", "Google Pixel 6", "Xiaomi Mi 11", "Huawei P40"]
+    os_versions = ["14.0", "15.1", "16.2", "13.5", "12.4"]
+    platforms = ["iOS", "Android", "Windows", "macOS", "Linux"]
+    app_versions = ["1.39.0", "1.38.5", "1.40.0", "6.1.0", "6.0.1"]
+
+    device_model = random.choice(devices)
+    system_version = random.choice(os_versions)
+    platform = random.choice(platforms)
+    app_version = random.choice(app_versions)
+    system_lang_code = random.choice(["en", "ru", "uk", "de"])
+    lang_pack = "android" if platform == "Android" else "ios"
+    lang_code = system_lang_code
+    location = fake.city() + ", " + fake.country()
+
+    return {
+        "device_model": device_model,
+        "system_version": system_version,
+        "app_version": app_version,
+        "system_lang_code": system_lang_code,
+        "lang_pack": lang_pack,
+        "lang_code": lang_code,
+        "platform": platform,
+        "location": location
+    }
+
+# Создание клиента Telethon с рандомными данными
 async def get_telethon_client(user_id):
     session_string = await load_session_from_firebase(user_id)
     if session_string:
-        client = TelegramClient(StringSession(session_string), API_ID, API_HASH)
+        session = StringSession(session_string)
     else:
-        client = TelegramClient(StringSession(), API_ID, API_HASH)
+        session = StringSession()
+
+    device_details = get_random_device_details()
+    client = TelegramClient(
+        session=session,
+        api_id=API_ID,
+        api_hash=API_HASH,
+        connection=ConnectionTcpFull,
+        device_model=device_details["device_model"],
+        system_version=device_details["system_version"],
+        app_version=device_details["app_version"],
+        system_lang_code=device_details["system_lang_code"],
+        lang_pack=device_details["lang_pack"],
+        lang_code=device_details["lang_code"],
+        platform=device_details["platform"],
+        catch_up=True
+    )
+    print(f"Создан клиент для {user_id} с устройством: {device_details['device_model']}, "
+          f"платформа: {device_details['platform']}, версия: {device_details['system_version']}, "
+          f"местоположение: {device_details['location']}")
     return client
 
 # Языковые переводы (оставлены без изменений)
@@ -158,12 +208,9 @@ LANGUAGES = {
         'auth_error': 'Не удалось получить доступ. Убедитесь, что бот добавлен как администратор или чат публичный.',
         'note_cmd': 'Заметка успешно сохранена (бот не будет реагировать).'
     },
-    'Украинский': { # Оставлено без изменений
-    },
-    'English': { # Оставлено без изменений
-    },
-    'Deutsch': { # Оставлено без изменений
-    }
+    'Украинский': {},  # Оставлено пустым для заполнения
+    'English': {},     # Оставлено пустым для заполнения
+    'Deutsch': {}      # Оставлено пустым для заполнения
 }
 
 # Логирование в канал
@@ -512,16 +559,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             if context.user_data.get('waiting_for_code'):
                 try:
-                    # Использование phone_code_hash при авторизации
                     print(f"Используемый phone_code_hash: {context.user_data['phone_code_hash']}")
                     await client.sign_in(
-                    phone=context.user_data['phone'],
-                    code=text,
-                    phone_code_hash=context.user_data['phone_code_hash']
+                        phone=context.user_data['phone'],
+                        code=text,
+                        phone_code_hash=context.user_data['phone_code_hash']
                     )
                     await update.message.reply_text(LANGUAGES['Русский']['auth_success'])
                     del context.user_data['waiting_for_code']
-                    del context.user_data['phone_code_hash']  # Очищаем после успешной авторизации
+                    del context.user_data['phone_code_hash']
                     print(f"Успешная авторизация {name} (@{username})")
                     keyboard = [
                         [InlineKeyboardButton("Русский", callback_data='lang_Русский')],
@@ -538,12 +584,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     del context.user_data['waiting_for_code']
                     print(f"Запрос пароля 2FA у {name} (@{username})")
                 except telethon_errors.RPCError as e:
-                    if "authorization code has expired" in str(e).lower():
+                    error_msg = str(e).lower()
+                    if "authorization code has expired" in error_msg:
                         await update.message.reply_text("Код подтверждения устарел. Пожалуйста, начните заново с /start для получения нового кода.")
                         del context.user_data['waiting_for_code']
                         del context.user_data['phone_code_hash']
                         print(f"Истек срок действия кода для {name} (@{username}): {str(e)}")
-                    elif "used in another request" in str(e).lower() or "already used" in str(e).lower():
+                    elif "used in another request" in error_msg or "already used" in error_msg:
                         await update.message.reply_text("Этот код уже был использован в другом запросе. Пожалуйста, начните заново с /start для получения нового кода.")
                         del context.user_data['waiting_for_code']
                         del context.user_data['phone_code_hash']
@@ -621,7 +668,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 except telethon_errors.RPCError as e:
                     await update.message.reply_text(texts['rpc_error'].format(e=str(e)))
                     await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
-            # Остальная логика обработки ID осталась прежней
             del context.user_data['waiting_for_id']
     
     if 'waiting_for_limit' in context.user_data:
@@ -885,12 +931,15 @@ async def process_parsing(message, context):
                 else:
                     normalized_link = link
                 
-                await client.get_entity(normalized_link.split('/')[-2] if context.user_data['parse_type'] in ['parse_post_commentators', 'parse_auth_access'] else normalized_link)
+                entity = await client.get_entity(normalized_link.split('/')[-2] if context.user_data['parse_type'] in ['parse_post_commentators', 'parse_auth_access'] else normalized_link)
+                if not entity:
+                    raise telethon_errors.RPCError('Entity not found')
             except telethon_errors.ChannelPrivateError:
                 context.user_data['parsing_done'] = True
-                await message.reply_text(texts['no_access'].format(link=link))
-                context.user_data['parsing_in_progress'] = False
+                await message.reply_text(texts['no_access'].format(link=link) + "\n" + texts['auth_request'],
+                                        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='update_menu')]]))
                 await log_to_channel(context, texts['no_access'].format(link=link), username)
+                context.user_data['parsing_in_progress'] = False
                 return
             except telethon_errors.RPCError as e:
                 context.user_data['parsing_done'] = True
