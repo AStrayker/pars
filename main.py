@@ -165,6 +165,7 @@ LANGUAGES = {
 
 # Логирование в канал
 async def log_to_channel(context, message, username=None):
+    print(f"Попытка отправки лога в канал {LOG_CHANNEL_ID}")
     try:
         user = context.user_data.get('user', {})
         name = user.get('name', username or 'Неизвестно')
