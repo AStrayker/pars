@@ -513,17 +513,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if context.user_data.get('waiting_for_code'):
                 try:
                     # Использование phone_code_hash при авторизации
-                    await client.sign_in(
-                        phone=context.user_data['phone'],
-                        code=text,
-                        phone_code_hash=context.user_data['phone_code_hash']
-                    )
                     print(f"Используемый phone_code_hash: {context.user_data['phone_code_hash']}")
-await client.sign_in(
-    phone=context.user_data['phone'],
-    code=text,
-    phone_code_hash=context.user_data['phone_code_hash']
-)
+                    await client.sign_in(
+                    phone=context.user_data['phone'],
+                    code=text,
+                    phone_code_hash=context.user_data['phone_code_hash']
+                    )
                     await update.message.reply_text(LANGUAGES['Русский']['auth_success'])
                     del context.user_data['waiting_for_code']
                     del context.user_data['phone_code_hash']  # Очищаем после успешной авторизации
