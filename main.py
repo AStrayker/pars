@@ -91,12 +91,10 @@ fake = Faker()
 def get_random_device_details():
     devices = ["iPhone 12", "iPhone 13", "iPhone 14", "iPhone SE", "Samsung Galaxy S21", "Google Pixel 6", "Xiaomi Mi 11", "Huawei P40"]
     os_versions = ["14.0", "15.1", "16.2", "13.5", "12.4"]
-    platforms = ["iOS", "Android", "Windows", "macOS", "Linux"]
     app_versions = ["1.39.0", "1.38.5", "1.40.0", "6.1.0", "6.0.1"]
 
     device_model = random.choice(devices)
     system_version = random.choice(os_versions)
-    platform = random.choice(platforms)
     app_version = random.choice(app_versions)
     system_lang_code = random.choice(["en", "ru", "uk", "de"])
     lang_code = system_lang_code
@@ -108,7 +106,6 @@ def get_random_device_details():
         "app_version": app_version,
         "system_lang_code": system_lang_code,
         "lang_code": lang_code,
-        "platform": platform,
         "location": location
     }
 
@@ -131,11 +128,10 @@ async def get_telethon_client(user_id):
         app_version=device_details["app_version"],
         system_lang_code=device_details["system_lang_code"],
         lang_code=device_details["lang_code"],
-        platform=device_details["platform"],
         catch_up=True
     )
     print(f"Создан клиент для {user_id} с устройством: {device_details['device_model']}, "
-          f"платформа: {device_details['platform']}, версия: {device_details['system_version']}, "
+          f"версия: {device_details['system_version']}, "
           f"местоположение: {device_details['location']}")
     return client
 # Языковые переводы (оставлены без изменений)
