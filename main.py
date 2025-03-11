@@ -99,7 +99,6 @@ def get_random_device_details():
     platform = random.choice(platforms)
     app_version = random.choice(app_versions)
     system_lang_code = random.choice(["en", "ru", "uk", "de"])
-    lang_pack = "android" if platform == "Android" else "ios"
     lang_code = system_lang_code
     location = fake.city() + ", " + fake.country()
 
@@ -108,7 +107,6 @@ def get_random_device_details():
         "system_version": system_version,
         "app_version": app_version,
         "system_lang_code": system_lang_code,
-        "lang_pack": lang_pack,
         "lang_code": lang_code,
         "platform": platform,
         "location": location
@@ -132,7 +130,6 @@ async def get_telethon_client(user_id):
         system_version=device_details["system_version"],
         app_version=device_details["app_version"],
         system_lang_code=device_details["system_lang_code"],
-        lang_pack=device_details["lang_pack"],
         lang_code=device_details["lang_code"],
         platform=device_details["platform"],
         catch_up=True
@@ -141,7 +138,6 @@ async def get_telethon_client(user_id):
           f"платформа: {device_details['platform']}, версия: {device_details['system_version']}, "
           f"местоположение: {device_details['location']}")
     return client
-
 # Языковые переводы (оставлены без изменений)
 LANGUAGES = {
     'Русский': {
