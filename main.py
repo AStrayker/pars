@@ -853,10 +853,16 @@ async def parse_auth_access(client, link, context):
             await context.bot.send_message(chat_id=user_id, text=texts['auth_success'])
             await log_to_channel(context, f"Доступ к закрытому чату {chat_id} предоставлен для {name} (@{username})", username)
         else:
-            await context.bot.send_message(chat_id=user_id, text=texts['auth_error'])
-            await log_to_channel(context, f"Ошибка доступа к чату {chat_id} для {name} (@{username})", username)
+            raise telethon_errors.ChannelPrivateError("No access to chat")
+    except telethon_errors.ChannelPrivateError:
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=texts['no_access'].format(link=link) + "\n" + texts['auth_request'],
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Добавить бота и повторить", callback_data='retry_access')]])
+        )
+        await log_to_channel(context, f"Ошибка доступа к чату {chat_id} для {name} (@{username})", username)
     except telethon_errors.RPCError as e:
-        await context.bot.send_message(chat_id=user_id, text=texts['auth_error'])
+        await context.bot.send_message(chat_id=user_id, text=texts['auth_error'] + f" ({str(e)})")
         await log_to_channel(context, f"Ошибка авторизации для {name} (@{username}): {str(e)}", username)
 
 # Сообщение "Подождите..."
@@ -928,8 +934,10 @@ async def process_parsing(message, context):
                     raise telethon_errors.RPCError('Entity not found')
             except telethon_errors.ChannelPrivateError:
                 context.user_data['parsing_done'] = True
-                await message.reply_text(texts['no_access'].format(link=link) + "\n" + texts['auth_request'],
-                                        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='update_menu')]]))
+                await message.reply_text(
+                    texts['no_access'].format(link=link) + "\n" + texts['auth_request'],
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Добавить бота и повторить", callback_data='retry_access')]])
+                )
                 await log_to_channel(context, texts['no_access'].format(link=link), username)
                 context.user_data['parsing_in_progress'] = False
                 return
@@ -1215,6 +1223,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         await query.edit_message_text("Транзакция отклонена.")
         await log_to_channel(context, f"Транзакция пользователя {rejected_user_id} отклонена", "Администратор")
+    
+    elif query.data == 'retry_access':
+        if 'parse_type' in context.user_data and context.user_data['parse_type'] == 'parse_auth_access':
+            await query.edit_message_text(
+                texts['auth_request'],
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='update_menu')]])
+            )
+            context.user_data['waiting_for_link'] = True  # Сбрасываем ожидание новой ссылки
 
 # Обработчик ошибок
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
