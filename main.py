@@ -30,6 +30,10 @@ TON_WALLET_ADDRESS = 'UQAP4wrP0Jviy03CTeniBjSnAL5UHvcMFtxyi1Ip1exl9pLu'
 TON_API_KEY = os.environ.get('TON_API_KEY', 'YOUR_TON_API_KEY')
 ADMIN_IDS = ['282198872']
 
+# Добавляем переменные окружения для авторизации
+PHONE_NUMBER = os.environ.get('PHONE_NUMBER', '')  # Укажите ваш номер телефона, например, "+1234567890"
+AUTH_CODE = os.environ.get('AUTH_CODE', '')  # Код авторизации (можно оставить пустым, если сессия уже создана)
+
 # Инициализация Firebase
 SERVICE_ACCOUNT_FILE = 'serviceAccountKey.json'
 if not os.path.exists(SERVICE_ACCOUNT_FILE):
@@ -58,12 +62,34 @@ client = TelegramClient('my_session.session', API_ID, API_HASH)
 
 # Инициализация клиента
 async def initialize_client():
-    await client.start()
-    print("Клиент успешно авторизован для общего использования")
-    # Сохраняем сессию (выполните один раз при авторизации)
-    # session_data = client.session.save()
-    # with open('my_session.session', 'w') as f:
-    #     f.write(session_data)
+    try:
+        # Проверяем, авторизован ли клиент
+        await client.connect()
+        if not await client.is_user_authorized():
+            print("Сессия не найдена или повреждена. Требуется авторизация.")
+            if not PHONE_NUMBER:
+                raise ValueError("PHONE_NUMBER не указан в переменных окружения. Укажите номер телефона для авторизации.")
+            
+            # Авторизация через номер телефона
+            await client.start(
+                phone=lambda: PHONE_NUMBER,
+                code_callback=lambda: AUTH_CODE if AUTH_CODE else input("Введите код авторизации: "),
+                password=lambda: input("Введите пароль (если требуется): ") if sys.stdin.isatty() else None
+            )
+            print("Клиент успешно авторизован для общего использования")
+            
+            # Сохраняем сессию
+            session_data = client.session.save()
+            with open('my_session.session', 'w') as f:
+                f.write(session_data)
+        else:
+            print("Клиент уже авторизован, используется существующая сессия.")
+    except Exception as e:
+        print(f"Ошибка при инициализации клиента: {str(e)}\n{traceback.format_exc()}")
+        raise
+    finally:
+        if client.is_connected():
+            await client.disconnect()
 
 # Создание клиента Telethon (используем глобальный клиент)
 async def get_telethon_client(user_id):
