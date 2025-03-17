@@ -1177,22 +1177,21 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if query.data == 'cancel_payment':
         menu_text, menu_keyboard = get_main_menu(user_id, context)
-        await query.edit_message_text(menu_text, reply_markup=menu_keyboard
-async def note(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    username = update.effective_user.username or "No username"
-    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
-    texts = LANGUAGES[lang]
-    note_text = update.message.text.replace('/note ', '').strip()
-    if note_text:
-        await log_to_channel(context, f"Note saved: {note_text}", username)
-        await update.message.reply_text(texts['note_cmd'])
-    else:
-        await update.message.reply_text("Пожалуйста, укажи текст заметки после /note!")
+        await query.edit_message_text(menu_text, reply_markup=menu_keyboard)
+        await log_to_channel(context, f"Payment cancelled by {name}", username)
+        return
 
-# Обработчик кнопок (продолжение)
-async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # ... (предыдущая часть обработчика осталась выше)
+    if query.data.startswith('reject_'):
+        rejected_user_id = query.data.split('_')[1]
+        rejected_user_lang = users.get(rejected_user_id, {}).get('language', 'Русский')
+        rejected_texts = LANGUAGES[rejected_user_lang]
+        await context.bot.send_message(
+            chat_id=rejected_user_id,
+            text=rejected_texts['payment_error']
+        )
+        await query.edit_message_text("Payment rejected")
+        await log_to_channel(context, f"Payment rejected for user ID {rejected_user_id} by admin", username)
+        return
 
     if query.data == 'identifiers':
         context.user_data['waiting_for_id'] = True
@@ -1200,8 +1199,9 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if query.data == 'close_id':
+        await query.message.delete()
         menu_text, menu_keyboard = get_main_menu(user_id, context)
-        await query.edit_message_text(menu_text, reply_markup=menu_keyboard)
+        await context.bot.send_message(chat_id=query.message.chat_id, text=menu_text, reply_markup=menu_keyboard)
         return
 
     if query.data == 'continue_id':
@@ -1214,7 +1214,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if last_input:
             suggested_link = f"https://t.me/{last_input.strip('@')}"
             keyboard = [
-                [InlineKeyboardButton(texts['suggest_link'].format(link=suggested_link), callback_data=f"use_link_{suggested_link}")],
+                [InlineKeyboardButton(texts['suggest_link'].format(link=suggested_link), callback_data=f'use_link_{suggested_link}')],
                 [InlineKeyboardButton(texts['retry_link'], callback_data='retry_link')]
             ]
             await query.edit_message_text(texts['fix_link'], reply_markup=InlineKeyboardMarkup(keyboard))
@@ -1229,7 +1229,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if query.data == 'retry_link':
-        await query.edit_message_text(texts['retry_link'])
+        if context.user_data['parse_type'] in ['parse_authors', 'parse_participants', 'parse_phone_contacts', 'parse_auth_access']:
+            await query.edit_message_text(texts['link_group'])
+        elif context.user_data['parse_type'] == 'parse_post_commentators':
+            await query.edit_message_text(texts['link_post'])
         return
 
     if query.data == 'requisites':
@@ -1238,54 +1241,52 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if query.data == 'logs_channel' and str(user_id) in ADMIN_IDS:
         await query.edit_message_text(texts['logs_channel'], reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("Go to Logs", url=f"https://t.me/c/{str(LOG_CHANNEL_ID)[4:]}")]
+            [InlineKeyboardButton("Go to channel", url=f"https://t.me/{LOG_CHANNEL_ID}")]
         ]))
-        return
-
-    if query.data.startswith('reject_') and str(user_id) in ADMIN_IDS:
-        rejected_user_id = query.data.split('_')[1]
-        rejected_user = load_users().get(rejected_user_id, {})
-        rejected_lang = rejected_user.get('language', 'Русский')
-        rejected_texts = LANGUAGES[rejected_lang]
-        await context.bot.send_message(
-            chat_id=rejected_user_id,
-            text=rejected_texts['payment_error']
-        )
-        await query.edit_message_text("Transaction rejected")
-        await log_to_channel(context, f"Transaction rejected for user {rejected_user_id}", username)
         return
 
     if query.data.startswith('info_'):
         info_type = query.data.split('_')[1]
         info_texts = {
             'identifiers': "Get user or chat IDs by sending @username, a link, or forwarding a message.",
-            'parser': "Parse users from groups, posts, or collect phone numbers with filters.",
-            'subscribe': "Unlock higher limits and more features with a paid subscription.",
-            'requisites': "Payment details for subscriptions.",
+            'parser': "Parse group participants, commentators, or post commentators.",
+            'subscribe': "Upgrade your subscription for more parsing limits.",
+            'requisites': "Payment methods for subscription.",
             'logs': "View bot logs (admin only)."
         }
-        await query.edit_message_text(info_texts.get(info_type, "No info available"), reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(texts['close'], callback_data='back_to_menu')]
-        ]))
+        await query.edit_message_text(info_texts.get(info_type, "No info available"))
         return
 
-    if query.data == 'back_to_menu':
-        menu_text, menu_keyboard = get_main_menu(user_id, context)
-        await query.edit_message_text(menu_text, reply_markup=menu_keyboard)
-        return
+# Команда /note
+async def note(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    username = update.effective_user.username or "No username"
+    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
+    texts = LANGUAGES[lang]
+    note_text = update.message.text[6:].strip()
+    await log_to_channel(context, f"Note: {note_text}", username)
+    await update.message.reply_text(texts['note_cmd'])
 
 # Главная функция
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
+
+    # Регистрация обработчиков команд
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("info", info))
     application.add_handler(CommandHandler("home", home))
     application.add_handler(CommandHandler("note", note))
+
+    # Регистрация обработчиков сообщений и кнопок
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button))
-    
+
+    # Запуск бота
     print("Bot is starting...")
-    application.run_polling()
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"Error in main: {str(e)}\n{traceback.format_exc()}")
