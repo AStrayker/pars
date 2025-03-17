@@ -1256,10 +1256,27 @@ async def ask_for_filters(message, context):
 
 # Обработка парсинга
 async def process_parsing(message, context):
-    user_id = context.user_data.get('user_id', message.from_user.id)
+    # Получаем user_id из message.from_user.id, а не из context.user_data, если это возможно
+    user_id = message.from_user.id if message.from_user else context.user_data.get('user_id')
+    if not user_id:
+        await message.reply_text("Ошибка: не удалось определить ваш ID. Попробуйте снова с /start.")
+        return
+    
     username = message.from_user.username or "Без username"
     name = message.from_user.full_name or "Без имени"
     users = load_users()
+    
+    # Если пользователя нет в базе, добавляем его с языком по умолчанию
+    if str(user_id) not in users:
+        users[str(user_id)] = {
+            'name': name,
+            'language': 'Русский',
+            'subscription': {'type': 'Бесплатная', 'end': None},
+            'requests': 0,
+            'daily_requests': {'count': 0, 'last_reset': datetime.now().isoformat()}
+        }
+        save_users(users)
+    
     lang = users[str(user_id)]['language']
     texts = LANGUAGES[lang]
     subscription = users[str(user_id)]['subscription']
