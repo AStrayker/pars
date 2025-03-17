@@ -1185,7 +1185,7 @@ async def process_parsing(message, context):
                 caption = texts['caption_post_commentators']
                 success_message = f'🎉 Найдено {count} комментаторов поста!\n{stats}\nСпарсить ещё? 🎉'
             
-               context.user_data['parsing_done'] = True
+            context.user_data['parsing_done'] = True
             await message.reply_document(document=excel_file, filename=filename, caption=caption)
             await message.reply_text(
                 success_message,
@@ -1200,7 +1200,9 @@ async def process_parsing(message, context):
             update_user_data(user_id, name, context, requests=1)
             
             keyboard_rate = [
-                [InlineKeyboardButton("(1)", callback_data='rate_1'), InlineKeyboardButton("(2)", callback_data='rate_2'), InlineKeyboardButton("(3)", callback_data='rate_3'), InlineKeyboardButton("(4)", callback_data='rate_4'), InlineKeyboardButton("(5)", callback_data='rate_5')]
+                [InlineKeyboardButton("(1)", callback_data='rate_1'), InlineKeyboardButton("(2)", callback_data='rate_2'), 
+                 InlineKeyboardButton("(3)", callback_data='rate_3'), InlineKeyboardButton("(4)", callback_data='rate_4'), 
+                 InlineKeyboardButton("(5)", callback_data='rate_5')]
             ]
             await message.reply_text(texts['rate_parsing'], reply_markup=InlineKeyboardMarkup(keyboard_rate))
 
