@@ -1246,8 +1246,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data.startswith('lang_'):
         new_lang = query.data.split('_')[1]
         update_user_data(user_id, name, context, lang=new_lang)
-        await query.edit_message_text(texts['subscribe'].replace('Русский', new_lang), 
-                                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]]))
+        await query.edit_message_text(
+            texts['subscribe'].replace('Русский', new_lang), 
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]])
+        )
         return
     
     if query.data == 'subscribed':
@@ -1257,9 +1259,23 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 menu_text, menu_keyboard = get_main_menu(user_id, context)
                 await query.edit_message_text(menu_text, reply_markup=menu_keyboard)
             else:
-                await query.edit_message_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]]))
-        except telegram_error.BadRequest:
-            await query.edit_message_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]]))
+                await query.edit_message_text(
+                    texts['subscribe'],
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]])
+                )
+        except telegram_error.BadRequest as e:
+            if "chat not found" in str(e).lower():
+                await query.edit_message_text(
+                    "Канал не найден. Убедитесь, что бот добавлен в канал, или свяжитесь с поддержкой: @alex_strayker.",
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]])
+                )
+                await log_to_channel(context, f"Ошибка: канал {SUBSCRIPTION_CHANNEL_ID} не найден", username)
+            else:
+                await query.edit_message_text(
+                    "Ошибка проверки подписки. Попробуйте позже или свяжитесь с @alex_strayker.",
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]])
+                )
+                await log_to_channel(context, f"Ошибка проверки подписки: {str(e)}", username)
         return
     
     if query.data == 'identifiers':
@@ -1321,7 +1337,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await ask_for_filters(query.message, context)
         return
     
-      if query.data == 'no_filter':
+    if query.data == 'no_filter':
         context.user_data['limit'] = check_parse_limit(user_id, context.user_data.get('limit', 15000), context.user_data['parse_type'], context)
         context.user_data['filters'] = {'only_with_username': False, 'exclude_bots': False, 'only_active': False}
         await process_parsing(query.message, context)
