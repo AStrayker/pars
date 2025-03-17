@@ -392,7 +392,7 @@ def check_request_limit(user_id):
     return daily_requests['count'] < max_requests, 24 - (now - last_reset).seconds // 3600
 
 # Проверка лимита парсинга
-def check_parse_limit(user_id, limit, parse_type):
+def check_parse_limit(user_id, limit, parse_type, context):
     users = load_users()
     user_id_str = str(user_id)
     user = users.get(user_id_str, {})
@@ -400,7 +400,7 @@ def check_parse_limit(user_id, limit, parse_type):
     now = datetime.now()
     if subscription['type'].startswith('Платная') and subscription['end']:
         if datetime.fromisoformat(subscription['end']) < now:
-            update_user_data(user_id, user.get('name', 'Неизвестно'), None, subscription={'type': 'Бесплатная', 'end': None})
+            update_user_data(user_id, user.get('name', 'Неизвестно'), context, subscription={'type': 'Бесплатная', 'end': None})
             lang = user.get('language', 'Русский')
             texts = LANGUAGES[lang]
             loop = asyncio.get_event_loop()
@@ -1142,7 +1142,7 @@ async def process_parsing(message, context):
                 await log_to_channel(context, f"RPC error: {str(e)} (RU: Ошибка RPC)", username)
                 return
             
-            limit = check_parse_limit(user_id, context.user_data['limit'], context.user_data['parse_type'])
+            limit = check_parse_limit(user_id, context.user_data['limit'], context.user_data['parse_type'], context)
             if context.user_data['parse_type'] == 'parse_authors':
                 data = await parse_commentators(normalized_link, limit)
             elif context.user_data['parse_type'] == 'parse_participants':
@@ -1158,6 +1158,8 @@ async def process_parsing(message, context):
                 return
             
             all_data.extend(data)
+        
+        # ... (остальной код остаётся без изменений)
         
         filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False})
         filtered_data = filter_data(all_data, filters)
@@ -1319,8 +1321,8 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await ask_for_filters(query.message, context)
         return
     
-    if query.data == 'no_filter':
-        context.user_data['limit'] = check_parse_limit(user_id, context.user_data.get('limit', 15000), context.user_data['parse_type'])
+      if query.data == 'no_filter':
+        context.user_data['limit'] = check_parse_limit(user_id, context.user_data.get('limit', 15000), context.user_data['parse_type'], context)
         context.user_data['filters'] = {'only_with_username': False, 'exclude_bots': False, 'only_active': False}
         await process_parsing(query.message, context)
         return
@@ -1508,7 +1510,17 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(menu_text, reply_markup=menu_keyboard)
         return
 
-# Основная функция запуска бота
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Обработчик ошибок для логирования и уведомления пользователя."""
+    print(f"Произошла ошибка: {context.error}")
+    traceback.print_exc()
+    if update and update.effective_message:
+        await update.effective_message.reply_text(
+            "Произошла ошибка. Пожалуйста, попробуйте позже или свяжитесь с поддержкой: @alex_strayker."
+        )
+    if hasattr(context, 'bot'):
+        await log_to_channel(context, f"Ошибка: {str(context.error)}", "Система")
+
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
     
@@ -1522,10 +1534,6 @@ def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button))
     
+    application.add_error_handler(error_handler)
+    
     application.run_polling()
-
-if __name__ == '__main__':
-    try:
-        main()
-    except Exception as e:
-        print(f"Ошибка запуска бота: {str(e)}\n{traceback.format_exc()}")
