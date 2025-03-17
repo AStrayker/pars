@@ -1598,7 +1598,15 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
 # Основная функция
-async def main():
+import asyncio
+
+def main():
+    loop = asyncio.get_event_loop()
+    if loop.is_running():
+        print("Цикл событий уже запущен!")
+    else:
+        print("Цикл событий не запущен, запускаем бота...")
+
     application = Application.builder().token(BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
@@ -1611,7 +1619,8 @@ async def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button))
 
-    await application.run_polling()
+    print("Бот запущен...")
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()
