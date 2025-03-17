@@ -1157,7 +1157,7 @@ async def process_parsing(message, context):
                 context.user_data['parsing_in_progress'] = False
                 return
             
-             all_data.extend(data)
+            all_data.extend(data)
         
         filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False})
         filtered_data = filter_data(all_data, filters)
@@ -1228,7 +1228,6 @@ async def process_parsing(message, context):
     finally:
         if client_telethon.is_connected():
             await client_telethon.disconnect()
-
 # Обработчик callback-запросов
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
