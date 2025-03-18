@@ -1123,34 +1123,25 @@ async def process_parsing(message, context):
 
             all_data.extend(data)
 
-        # Применение фильтров (исключение удалённых контактов уже в filter_data)
-        filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False})
-        filtered_data = filter_data(all_data, filters)
+        # Удаляем вызов filter_data, чтобы убрать фильтры
+        # filtered_data = filter_data(all_data, filters)  # Убрано
 
         # Обновление статистики запросов
         update_user_data(user_id, name, context, requests=1)
 
         # Подготовка данных для отправки
-        if not filtered_data:
+        if not all_data:
             context.user_data['parsing_in_progress'] = False
-            await message.reply_text("Данные не найдены после применения фильтров.")
-            await log_to_channel(context, "Данные не найдены после применения фильтров", username)
+            await message.reply_text("Данные не найдены.")
+            await log_to_channel(context, "Данные не найдены", username)
             return
 
         # Создание файла Excel
-        excel_file = await create_excel_in_memory(filtered_data)
+        excel_file = await create_excel_in_memory(all_data)
 
-        # Генерация чек-листа парсинга и статистики
-        username_filter = "✓" if filters['only_with_username'] else "✗"
-        bots_filter = "✓" if filters['exclude_bots'] else "✗"
-        active_filter = "✓" if filters['only_active'] else "✗"
-        checklist = texts['parsing_checklist'].format(
-            username_filter=username_filter,
-            bots_filter=bots_filter,
-            active_filter=active_filter
-        )
-        total_rows = len(filtered_data)
-        rows_without_username = sum(1 for row in filtered_data if not row[1])  # Индекс 1 - username
+        # Генерация чек-листа и статистики (чек-лист упрощен, так как фильтры убраны)
+        total_rows = len(all_data)
+        rows_without_username = sum(1 for row in all_data if not row[1])  # Индекс 1 - username
         stats = f"\nСтатистика:\nОбщее количество строк: {total_rows}\nСтрок без username: {rows_without_username}"
 
         # Определение заголовка файла в зависимости от типа парсинга
@@ -1175,7 +1166,7 @@ async def process_parsing(message, context):
         await message.reply_document(
             document=excel_file,
             filename=file_name,
-            caption=f"{caption}\n\n{checklist}{stats}",
+            caption=f"{caption}\n\n{stats}",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(texts['rate_parsing'], callback_data='rate_parsing')]
             ])
@@ -1183,7 +1174,7 @@ async def process_parsing(message, context):
 
         # Если парсим номера телефонов, отправляем также VCF
         if context.user_data['parse_type'] == 'parse_phone_contacts':
-            vcf_file = create_vcf_file(filtered_data)
+            vcf_file = create_vcf_file(all_data)
             await message.reply_document(
                 document=vcf_file,
                 filename=f"{channel_name}_phone_contacts.vcf",
@@ -1191,7 +1182,7 @@ async def process_parsing(message, context):
             )
 
         # Логирование результата
-        stats = get_statistics(filtered_data)
+        stats = get_statistics(all_data)
         await log_to_channel(context, f"Парсинг завершён:\n{stats}", username, file=excel_file)
 
     except telethon_errors.FloodWaitError as e:
@@ -1229,6 +1220,7 @@ async def ask_for_filters(message, context):
         context.user_data['waiting_for_filters'] = True
         await message.reply_text(texts[text_key], reply_markup=InlineKeyboardMarkup(keyboard))
 
+# Обработчик кнопок
 # Обработчик кнопок
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -1276,7 +1268,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Обработка команды "Сбор данных / Парсер"
     if query.data == 'parser':
-        # Отладочный лог для проверки
         await log_to_channel(context, f"Обработка кнопки 'parser' для пользователя {name} (@{username})", username)
         await query.message.edit_text(texts['parser'], reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("Участники чата" if lang == 'Русский' else "Учасники чату" if lang == 'Украинский' else "Chat participants" if lang == 'English' else "Chat-Teilnehmer", callback_data='parse_participants')],
@@ -1355,7 +1346,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.data.startswith('limit_'):
         limit = int(query.data.replace('limit_', ''))
         context.user_data['limit'] = limit
-        await ask_for_filters(query.message, context)
+        await process_parsing(query.message, context)  # Прямой переход к парсингу
         await log_to_channel(context, f"Выбран лимит: {limit}", username)
         return
     if query.data == 'limit_custom':
@@ -1365,38 +1356,15 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     if query.data == 'max_no_filter':
         context.user_data['limit'] = 10000
-        context.user_data['filters'] = {'only_with_username': False, 'exclude_bots': False, 'only_active': False}
-        await process_parsing(query.message, context)
-        await log_to_channel(context, "Выбран максимальный лимит без фильтров", username)
+        await process_parsing(query.message, context)  # Прямой переход к парсингу
+        await log_to_channel(context, "Выбран максимальный лимит", username)
         return
     if query.data == 'skip_limit':
         subscription = users[str(user_id)]['subscription']
         context.user_data['limit'] = 150 if subscription['type'] == 'Бесплатная' else 1000
         await query.message.delete()
-        await ask_for_filters(query.message, context)
+        await process_parsing(query.message, context)  # Прямой переход к парсингу
         await log_to_channel(context, "Пользователь пропустил выбор лимита", username)
-        return
-
-    # Обработка фильтров
-    if query.data == 'filter_yes':
-        filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False})
-        filters[context.user_data['current_filter']] = True
-        context.user_data['filters'] = filters
-        await ask_for_filters(query.message, context)
-        await log_to_channel(context, f"Фильтр {context.user_data['current_filter']} включён", username)
-        return
-    if query.data == 'filter_no':
-        filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False})
-        filters[context.user_data['current_filter']] = False
-        context.user_data['filters'] = filters
-        await ask_for_filters(query.message, context)
-        await log_to_channel(context, f"Фильтр {context.user_data['current_filter']} выключён", username)
-        return
-    if query.data == 'skip_filters':
-        context.user_data['filters'] = {'only_with_username': False, 'exclude_bots': False, 'only_active': False}
-        await query.message.delete()
-        await process_parsing(query.message, context)
-        await log_to_channel(context, "Пользователь пропустил фильтры", username)
         return
 
     # Обработка закрытия (вызов /home)
@@ -1404,7 +1372,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Сброс всех активных состояний
         context.user_data.pop('waiting_for_id', None)
         context.user_data.pop('waiting_for_limit', None)
-        context.user_data.pop('waiting_for_filters', None)
+        context.user_data.pop('waiting_for_filters', None)  # Убрано, так как фильтры не используются
         context.user_data.pop('parse_type', None)
         context.user_data.pop('links', None)
         context.user_data.pop('limit', None)
