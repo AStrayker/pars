@@ -1175,7 +1175,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.edit_text(texts['logs_channel'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
         await log_to_channel(context, "Показан канал логов", username)
 
-    # Завершение обработки кнопок с добавлением базовых случаев
     elif query.data == 'close':
         try:
             await query.message.delete()
@@ -1197,6 +1196,11 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.edit_text(texts['thanks'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
         await log_to_channel(context, f"Пользователь оценил парсинг: {rating}/5", username)
 
+# Обработчик ошибок
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print(f"Произошла ошибка: {context.error}\nПодробности: {traceback.format_exc()}")
+    await log_to_channel(context, f"Системная ошибка: {str(context.error)}", "system")
+
 # Инициализация и запуск бота
 def main():
     try:
@@ -1211,6 +1215,7 @@ def main():
         application.add_handler(CommandHandler("note", note))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
         application.add_handler(CallbackQueryHandler(button))
+        application.add_error_handler(error_handler)
 
         print("Бот запущен...")
         application.run_polling(allowed_updates=Update.ALL_TYPES)
