@@ -1546,8 +1546,8 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(button))
 
-    if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
+   if __name__ == '__main__':  # строка 1549
+    loop = asyncio.get_event_loop()  # строка 1550
     try:
         loop.run_until_complete(main())
     except KeyboardInterrupt:
