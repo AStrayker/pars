@@ -1054,16 +1054,134 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     user_id = query.from_user.id
-    username = query.from_user.username or "Без username"
+    username = query.from_user.username
     name = query.from_user.full_name or "Без имени"
+    context.user_data['username'] = username
     users = load_users()
-    lang = users.get(str(user_id), {}).get('language', 'Русский')
+    
+    if str(user_id) not in users:
+        users[str(user_id)] = {
+            'name': name,
+            'language': 'Русский',
+            'subscription': {'type': 'Бесплатная', 'end': None},
+            'requests': 0,
+            'daily_requests': {'count': 0, 'last_reset': datetime.now().isoformat()}
+        }
+        save_users(users)
+    
+    lang = users[str(user_id)]['language']
     texts = LANGUAGES[lang]
-    subscription = users.get(str(user_id), {}).get('subscription', {'type': 'Бесплатная', 'end': None})
+    subscription = users[str(user_id)]['subscription']
 
-    if query.data == 'logs_channel' and str(user_id) in ADMIN_IDS:
+    if query.data.startswith('lang_'):
+        lang = query.data.replace('lang_', '')
+        update_user_data(user_id, name, context, lang=lang)
+        await query.message.edit_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]]))
+        await log_to_channel(context, f"Пользователь выбрал язык: {lang}", username)
+
+    elif query.data == 'subscribed':
+        menu_text, menu_keyboard = get_main_menu(user_id, context)
+        await query.message.edit_text(menu_text, reply_markup=menu_keyboard)
+        await log_to_channel(context, "Пользователь подтвердил подписку", username)
+
+    elif query.data == 'parser':
+        await query.message.edit_text(texts['parser'], reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Участники чата", callback_data='parse_participants')],
+            [InlineKeyboardButton("Авторы комментариев", callback_data='parse_commentators')],
+            [InlineKeyboardButton("Комментаторы поста", callback_data='parse_post_commentators')],
+            [InlineKeyboardButton(texts['phone_contacts'], callback_data='parse_phone_contacts')],
+            [InlineKeyboardButton(texts['auth_access'], callback_data='parse_auth_access')]
+        ]))
+        await log_to_channel(context, "Пользователь перешел к выбору типа парсинга", username)
+
+    elif query.data in ['parse_participants', 'parse_commentators', 'parse_post_commentators', 'parse_phone_contacts', 'parse_auth_access']:
+        context.user_data['parse_type'] = query.data
+        await query.message.edit_text(texts['link_group' if query.data != 'parse_post_commentators' else 'link_post'])
+        await log_to_channel(context, f"Пользователь выбрал тип парсинга: {query.data}", username)
+
+    elif query.data == 'identifiers':
+        context.user_data['waiting_for_id'] = True
+        await query.message.edit_text(texts['identifiers'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
+        await log_to_channel(context, "Пользователь перешел к определению ID", username)
+
+    elif query.data == 'subscribe':
+        await query.message.edit_text(
+            f"{texts['subscription_1h']}\n{texts['subscription_3d']}\n{texts['subscription_7d']}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("1 час - 2 USDT", callback_data='subscribe_1h')],
+                [InlineKeyboardButton("3 дня - 5 USDT", callback_data='subscribe_3d')],
+                [InlineKeyboardButton("7 дней - 7 USDT", callback_data='subscribe_7d')],
+                [InlineKeyboardButton("Пожизненно - 50 USDT", callback_data='subscribe_permanent')],
+                [InlineKeyboardButton(texts['payment_cancel'], callback_data='cancel_subscription')]
+            ])
+        )
+        await log_to_channel(context, "Пользователь перешел к выбору подписки", username)
+
+    elif query.data in ['subscribe_1h', 'subscribe_3d', 'subscribe_7d', 'subscribe_permanent']:
+        subscription_type = {'subscribe_1h': '1h', 'subscribe_3d': '3d', 'subscribe_7d': '7d', 'subscribe_permanent': 'permanent'}[query.data]
+        amount = {'1h': '2', '3d': '5', '7d': '7', 'permanent': '50'}[subscription_type]
+        await query.message.edit_text(texts['payment_wallet'].format(amount=amount, address=TON_WALLET_ADDRESS), reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton(texts['payment_paid'], callback_data='payment_paid')],
+            [InlineKeyboardButton(texts['payment_cancel'], callback_data='cancel_subscription')]
+        ]))
+        context.user_data['subscription_type'] = subscription_type
+        await log_to_channel(context, f"Пользователь выбрал подписку: {subscription_type}", username)
+
+    elif query.data == 'cancel_subscription':
+        menu_text, menu_keyboard = get_main_menu(user_id, context)
+        await query.message.edit_text(menu_text, reply_markup=menu_keyboard)
+        await log_to_channel(context, "Пользователь отменил подписку", username)
+
+    elif query.data == 'payment_paid':
+        await query.message.edit_text(texts['payment_hash'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['payment_cancel'], callback_data='cancel_subscription')]]))
+        context.user_data['waiting_for_hash'] = True
+        await log_to_channel(context, "Пользователь подтвердил оплату, ожидается хэш", username)
+
+    elif query.data.startswith('reject_'):
+        target_user_id = query.data.split('_')[1]
+        target_username = load_users().get(str(target_user_id), {}).get('name', 'Неизвестно')
+        lang = load_users().get(str(target_user_id), {}).get('language', 'Русский')
+        texts = LANGUAGES[lang]
+        await context.bot.send_message(chat_id=target_user_id, text=texts['payment_error'])
+        await log_to_channel(context, f"Администратор отклонил транзакцию для {target_user_id} ({target_username})", username)
+
+    elif query.data.startswith('limit_'):
+        limit = int(query.data.replace('limit_', ''))
+        context.user_data['limit'] = check_parse_limit(user_id, limit, context.user_data.get('parse_type', 'parse_participants'))
+        await process_parsing(query.message, context)
+        await log_to_channel(context, f"Выбран лимит: {limit}", username)
+
+    elif query.data == 'limit_custom':
+        context.user_data['waiting_for_limit'] = True
+        await query.message.edit_text(texts['limit'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit')]]))
+        await log_to_channel(context, "Пользователь перешел к вводу кастомного лимита", username)
+
+    elif query.data == 'max_limit' and subscription['type'].startswith('Платная'):
+        context.user_data['limit'] = 10000
+        await process_parsing(query.message, context)
+        await log_to_channel(context, "Выбран максимальный лимит", username)
+
+    elif query.data == 'skip_limit':
+        context.user_data['limit'] = 150 if subscription['type'] == 'Бесплатная' else 10000
+        await query.message.delete()
+        await process_parsing(query.message, context)
+        await log_to_channel(context, f"Пользователь пропустил выбор лимита, лимит: {context.user_data['limit']}", username)
+
+    elif query.data == 'requisites':
+        await query.message.edit_text(texts['requisites'].format(support=SUPPORT_USERNAME), reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
+        await log_to_channel(context, "Показаны реквизиты", username)
+
+    elif query.data == 'logs_channel' and str(user_id) in ADMIN_IDS:
         await query.message.edit_text(texts['logs_channel'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
         await log_to_channel(context, "Показан канал логов", username)
+
+    # Завершение обработки кнопок с добавлением базовых случаев
+    elif query.data == 'close':
+        try:
+            await query.message.delete()
+        except telegram_error.BadRequest:
+            await query.message.edit_text("Сообщение закрыто.", reply_markup=InlineKeyboardMarkup([]))
+        await log_to_channel(context, "Сообщение закрыто пользователем", username)
 
     elif query.data == 'rate_parsing':
         keyboard = [
@@ -1079,251 +1197,11 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.edit_text(texts['thanks'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
         await log_to_channel(context, f"Пользователь оценил парсинг: {rating}/5", username)
 
-    elif query.data == 'close' or query.data == 'close_id':
-        try:
-            await query.message.delete()
-        except telegram_error.BadRequest:
-            await query.message.edit_text("Сообщение закрыто.", reply_markup=InlineKeyboardMarkup([]))
-        await log_to_channel(context, "Сообщение закрыто пользователем", username)
-
-    elif query.data == 'continue_id':
-        menu_text, menu_keyboard = get_main_menu(user_id, context)
-        await query.message.edit_text(menu_text, reply_markup=menu_keyboard)
-        await log_to_channel(context, "Пользователь вернулся в главное меню после ID", username)
-
-    elif query.data == 'info_identifiers':
-        await query.message.edit_text("Получите ID пользователя, чата или поста. Отправьте @username, ссылку или перешлите сообщение.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
-        await log_to_channel(context, "Показана информация об идентификаторах", username)
-
-    elif query.data == 'info_parser':
-        await query.message.edit_text("Собирайте данные из чатов (участники), постов (комментаторы) или контактов (номера телефонов и ФИО).", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
-        await log_to_channel(context, "Показана информация о парсере", username)
-
-    elif query.data == 'info_subscribe':
-        await query.message.edit_text("Оформите подписку для доступа к расширенным функциям, таким как увеличенный лимит парсинга.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
-        await log_to_channel(context, "Показана информация о подписке", username)
-
-    elif query.data == 'info_requisites':
-        await query.message.edit_text("Свяжитесь с поддержкой для получения реквизитов оплаты.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
-        await log_to_channel(context, "Показана информация о реквизитах", username)
-
-    elif query.data == 'info_logs' and str(user_id) in ADMIN_IDS:
-        await query.message.edit_text("Канал с логами доступен только администраторам для отслеживания действий пользователей.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
-        await log_to_channel(context, "Показана информация о канале логов", username)
-
-    elif query.data == 'update_menu':
-        menu_text, menu_keyboard = get_main_menu(user_id, context)
-        await query.message.edit_text(menu_text, reply_markup=menu_keyboard)
-        await log_to_channel(context, "Меню обновлено по запросу пользователя", username)
-
-    # Добавление уведомления об истечении подписки
-    elif query.data == 'check_subscription':
-        sub_end = subscription.get('end')
-        if sub_end and datetime.fromisoformat(sub_end) < datetime.now():
-            await query.message.edit_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribe_button'], callback_data='subscribe')]]))
-            update_user_data(user_id, name, context, subscription={'type': 'Бесплатная', 'end': None})
-            await log_to_channel(context, f"Подписка пользователя {name} истекла", username)
-        else:
-            await query.message.edit_text(texts['payment_success'].format(end_time=sub_end or 'бессрочно'), reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
-            await log_to_channel(context, f"Подписка пользователя {name} активна до {sub_end or 'бессрочно'}", username)
-
-    # Обработка запроса статистики использования
-    elif query.data == 'stats':
-        requests = users.get(str(user_id), {}).get('requests', 0)
-        daily_requests = users.get(str(user_id), {}).get('daily_requests', {}).get('count', 0)
-        await query.message.edit_text(f"Статистика использования:\nОбщее число запросов: {requests}\nЗапросов сегодня: {daily_requests}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
-        await log_to_channel(context, f"Пользователь запросил статистику: {requests} запросов, {daily_requests} сегодня", username)
-
-# Новая команда для проверки статуса подписки
-async def check_subscription(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    username = update.effective_user.username or "Без username"
-    name = update.effective_user.full_name or "Без имени"
-    users = load_users()
-    lang = users.get(str(user_id), {}).get('language', 'Русский')
-    texts = LANGUAGES[lang]
-
-    keyboard = [[InlineKeyboardButton(texts['close'], callback_data='close')]]
-    sub_end = users.get(str(user_id), {}).get('subscription', {}).get('end')
-    if sub_end and datetime.fromisoformat(sub_end) < datetime.now():
-        await update.message.reply_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribe_button'], callback_data='subscribe')]]))
-        update_user_data(user_id, name, context, subscription={'type': 'Бесплатная', 'end': None})
-        await log_to_channel(context, f"Подписка пользователя {name} истекла", username)
-    else:
-        await update.message.reply_text(texts['payment_success'].format(end_time=sub_end or 'бессрочно'), reply_markup=InlineKeyboardMarkup(keyboard))
-        await log_to_channel(context, f"Подписка пользователя {name} активна до {sub_end or 'бессрочно'}", username)
-
-# Новая команда для отображения статистики
-async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    username = update.effective_user.username or "Без username"
-    name = update.effective_user.full_name or "Без имени"
-    users = load_users()
-    lang = users.get(str(user_id), {}).get('language', 'Русский')
-    texts = LANGUAGES[lang]
-
-    requests = users.get(str(user_id), {}).get('requests', 0)
-    daily_requests = users.get(str(user_id), {}).get('daily_requests', {}).get('count', 0)
-    await update.message.reply_text(f"Статистика использования:\nОбщее число запросов: {requests}\nЗапросов сегодня: {daily_requests}", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
-    await log_to_channel(context, f"Пользователь запросил статистику: {requests} запросов, {daily_requests} сегодня", username)
-
-# Добавление команд в главное меню
-def get_main_menu(user_id, context):
-    users = load_users()
-    user_id_str = str(user_id)
-    user_data = users.get(user_id_str, {})
-    lang = user_data.get('language', 'Русский')
-    texts = LANGUAGES[lang]
-    sub_type = user_data.get('subscription', {}).get('type', 'Бесплатная')
-    sub_end = user_data.get('subscription', {}).get('end')
-    sub_time = '—' if sub_type == 'Бесплатная' else (
-        'бессрочно' if sub_end is None else 
-        f"{(datetime.fromisoformat(sub_end) - datetime.now()).days * 24 + (datetime.fromisoformat(sub_end) - datetime.now()).seconds // 3600} часов"
-    )
-    requests = user_data.get('requests', 0)
-    name = user_data.get('name', context.user_data.get('username', 'Без имени') or 'Без имени')
-    limit_left, hours_left = check_request_limit(user_id)
-    limit_display = 5 if sub_type == 'Бесплатная' else 10 - user_data.get('daily_requests', {}).get('count', 0)
-    
-    is_admin = user_id_str in ADMIN_IDS
-    
-    buttons = [
-        [InlineKeyboardButton("Идентификаторы", callback_data='identifiers'), InlineKeyboardButton("(!)", callback_data='info_identifiers')],
-        [InlineKeyboardButton("Сбор данных / Парсер", callback_data='parser'), InlineKeyboardButton("(!)", callback_data='info_parser')],
-        [InlineKeyboardButton(texts['subscribe_button'], callback_data='subscribe'), InlineKeyboardButton("(!)", callback_data='info_subscribe')],
-        [InlineKeyboardButton(f"{texts['support'].format(support=SUPPORT_USERNAME)}", url=f"https://t.me/{SUPPORT_USERNAME[1:]}")],
-        [InlineKeyboardButton("Реквизиты", callback_data='requisites'), InlineKeyboardButton("(!)", callback_data='info_requisites')],
-        [InlineKeyboardButton("Проверить подписку", callback_data='check_subscription')],
-        [InlineKeyboardButton("Статистика", callback_data='stats')]
-    ]
-    if is_admin:
-        buttons.append([InlineKeyboardButton("Канал с логами", callback_data='logs_channel'), InlineKeyboardButton("(!)", callback_data='info_logs')])
-    
-    return texts['start_menu'].format(
-        name=name,
-        user_id=user_id,
-        lang=lang,
-        sub_type=sub_type,
-        sub_time=sub_time,
-        requests=requests,
-        limit=limit_display
-    ), InlineKeyboardMarkup(buttons)
-
-# Обработчик ошибок
-async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Проверка, существует ли update и effective_user
-    user_id = None
-    username = "Неизвестно"
-    name = "Неизвестно"
-    
-    if update and hasattr(update, 'effective_user') and update.effective_user:
-        user_id = update.effective_user.id
-        username = update.effective_user.username if update.effective_user.username else "Неизвестно"
-        name = update.effective_user.full_name if update.effective_user.full_name else "Неизвестно"
-    
-    error = context.error
-    lang = load_users().get(str(user_id), {}).get('language', 'Русский') if user_id else 'Русский'
-    texts = LANGUAGES[lang]
-
-    error_message = f"Произошла ошибка: {str(error)}\nПодробности: {traceback.format_exc()}"
-    print(error_message)
-
-    # Отправка уведомления только если есть user_id
-    if user_id:
-        try:
-            await context.bot.send_message(
-                chat_id=user_id,
-                text=texts['rpc_error'].format(e=str(error)),
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['home_cmd'], callback_data='update_menu')]])
-            )
-        except telegram_error.BadRequest:
-            pass
-
-    await log_to_channel(context, f"Ошибка для {name} (@{username}): {str(error)}", username)
-
-# Планировщик для автоматической проверки подписок
-async def check_subscriptions(context: ContextTypes.DEFAULT_TYPE):
-    users = load_users()
-    now = datetime.now()
-    for user_id_str, user_data in users.items():
-        sub_end = user_data.get('subscription', {}).get('end')
-        if sub_end and datetime.fromisoformat(sub_end) < now:
-            lang = user_data.get('language', 'Русский')
-            texts = LANGUAGES[lang]
-            name = user_data.get('name', 'Неизвестно')
-            try:
-                await context.bot.send_message(
-                    chat_id=int(user_id_str),
-                    text=texts['subscribe'],
-                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribe_button'], callback_data='subscribe')]])
-                )
-                update_user_data(int(user_id_str), name, context, subscription={'type': 'Бесплатная', 'end': None})
-                await log_to_channel(context, f"Подписка пользователя {name} (ID: {user_id_str}) истекла", "system")
-            except telegram_error.BadRequest as e:
-                print(f"Ошибка отправки уведомления пользователю {user_id_str}: {str(e)}")
-                await log_to_channel(context, f"Ошибка уведомления о подписке для {user_id_str}: {str(e)}", "system")
-
-# Обработчик команды для отправки обратной связи
-async def feedback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    username = update.effective_user.username or "Без username"
-    name = update.effective_user.full_name or "Без имени"
-    users = load_users()
-    lang = users.get(str(user_id), {}).get('language', 'Русский')
-    texts = LANGUAGES[lang]
-
-    if context.args:
-        feedback_text = " ".join(context.args)
-        for admin_id in ADMIN_IDS:
-            try:
-                await context.bot.send_message(
-                    chat_id=admin_id,
-                    text=f"Обратная связь от {name} (@{username}) (ID: {user_id}):\n{feedback_text}"
-                )
-            except telegram_error.BadRequest as e:
-                print(f"Ошибка отправки обратной связи администратору {admin_id}: {str(e)}")
-        await update.message.reply_text(texts['thanks'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['home_cmd'], callback_data='update_menu')]]))
-        await log_to_channel(context, f"Обратная связь от {name}: {feedback_text}", username)
-    else:
-        await update.message.reply_text("Использование: /feedback <ваш текст>", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
-
-# Обработчик команды для экспорта логов (только для админов)
-async def export_logs(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    username = update.effective_user.username or "Без username"
-    name = update.effective_user.full_name or "Без имени"
-    if str(user_id) not in ADMIN_IDS:
-        await update.message.reply_text("У вас нет прав для этой команды.")
-        return
-
-    users = load_users()
-    lang = users.get(str(user_id), {}).get('language', 'Русский')
-    texts = LANGUAGES[lang]
-
-    log_data = []
-    with open('logs_channel_messages.txt', 'r', encoding='utf-8') as f:  # Предполагается, что логи сохраняются в файл
-        log_data = f.readlines()
-
-    if not log_data:
-        await update.message.reply_text("Логи не найдены.")
-        return
-
-    log_file = BytesIO("\n".join(log_data).encode('utf-8'))
-    log_file.name = "logs.txt"
-    await update.message.reply_document(
-        document=log_file,
-        caption="Экспорт логов",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]])
-    )
-    await log_to_channel(context, f"Админ {name} экспортировал логи", username)
-
-# Инициализация и запуск бота с планировщиком
+# Инициализация и запуск бота
 def main():
     try:
-        # Создание экземпляра приложения
         application = Application.builder().token(BOT_TOKEN).build()
 
-        # Регистрация обработчиков команд
         application.add_handler(CommandHandler("start", start))
         application.add_handler(CommandHandler("language", language))
         application.add_handler(CommandHandler("info", info))
@@ -1331,25 +1209,9 @@ def main():
         application.add_handler(CommandHandler("set_plan", set_plan))
         application.add_handler(CommandHandler("remove_plan", remove_plan))
         application.add_handler(CommandHandler("note", note))
-        application.add_handler(CommandHandler("check_subscription", check_subscription))
-        application.add_handler(CommandHandler("stats", stats))
-        application.add_handler(CommandHandler("feedback", feedback))
-        application.add_handler(CommandHandler("export_logs", export_logs))
-
-        # Регистрация обработчика сообщений
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-        # Регистрация обработчика кнопок
         application.add_handler(CallbackQueryHandler(button))
 
-        # Регистрация обработчика ошибок
-        application.add_error_handler(error_handler)
-
-        # Настройка планировщика для проверки подписок каждые 24 часа
-        job_queue = application.job_queue
-        job_queue.run_repeating(check_subscriptions, interval=timedelta(hours=24), first=1)
-
-        # Запуск бота
         print("Бот запущен...")
         application.run_polling(allowed_updates=Update.ALL_TYPES)
 
