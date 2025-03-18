@@ -1276,6 +1276,8 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Обработка команды "Сбор данных / Парсер"
     if query.data == 'parser':
+        # Отладочный лог для проверки
+        await log_to_channel(context, f"Обработка кнопки 'parser' для пользователя {name} (@{username})", username)
         await query.message.edit_text(texts['parser'], reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("Участники чата" if lang == 'Русский' else "Учасники чату" if lang == 'Украинский' else "Chat participants" if lang == 'English' else "Chat-Teilnehmer", callback_data='parse_participants')],
             [InlineKeyboardButton("Авторы комментариев" if lang == 'Русский' else "Автори коментарів" if lang == 'Украинский' else "Commentators" if lang == 'English' else "Kommentatoren", callback_data='parse_authors')],
@@ -1411,7 +1413,10 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data.pop('parsing_done', None)
         # Получение и отображение главного меню
         menu_text, menu_keyboard = get_main_menu(user_id, context)
-        await query.message.edit_text(menu_text, reply_markup=menu_keyboard)
+        try:
+            await query.message.edit_text(menu_text, reply_markup=menu_keyboard)
+        except telegram_error.BadRequest as e:
+            await query.message.reply_text(menu_text, reply_markup=menu_keyboard)  # Альтернатива при ошибке редактирования
         await log_to_channel(context, "Пользователь вернулся в главное меню через 'Закрыть'", username)
         return
 
