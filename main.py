@@ -1209,6 +1209,31 @@ def get_main_menu(user_id, context):
         limit=limit_display
     ), InlineKeyboardMarkup(buttons)
 
+# Обработчик ошибок
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id if update.effective_user else None
+    username = update.effective_user.username if update.effective_user else "Неизвестно"
+    name = update.effective_user.full_name if update.effective_user else "Неизвестно"
+    error = context.error
+
+    lang = load_users().get(str(user_id), {}).get('language', 'Русский') if user_id else 'Русский'
+    texts = LANGUAGES[lang]
+
+    error_message = f"Произошла ошибка: {str(error)}\nПодробности: {traceback.format_exc()}"
+    print(error_message)
+
+    if user_id:
+        try:
+            await context.bot.send_message(
+                chat_id=user_id,
+                text=texts['rpc_error'].format(e=str(error)),
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['home_cmd'], callback_data='update_menu')]])
+            )
+        except telegram_error.BadRequest:
+            pass
+
+    await log_to_channel(context, f"Ошибка для {name} (@{username}): {str(error)}", username)
+
 # Планировщик для автоматической проверки подписок
 async def check_subscriptions(context: ContextTypes.DEFAULT_TYPE):
     users = load_users()
