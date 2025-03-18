@@ -1503,34 +1503,3 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Основная функция для запуска бота
 async def main():
-    try:
-        # Инициализация клиента Telethon
-        await client_telethon.start()
-        print("Клиент Telethon успешно запущен.")
-
-        # Создание приложения Telegram
-        application = Application.builder().token(BOT_TOKEN).build()
-
-        # Добавление обработчиков
-        application.add_handler(CommandHandler("start", start))
-        application.add_handler(CommandHandler("language", language))
-        application.add_handler(CommandHandler("info", info))
-        application.add_handler(CommandHandler("home", home))
-        application.add_handler(CommandHandler("set_plan", set_plan))
-        application.add_handler(CommandHandler("remove_plan", remove_plan))
-        application.add_handler(CommandHandler("note", note))
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-        application.add_handler(CallbackQueryHandler(button_callback))
-
-        print("Бот запущен...")
-        await application.run_polling(allowed_updates=Update.ALL_TYPES)
-
-    except Exception as e:
-        print(f"Ошибка при запуске бота: {str(e)}\n{traceback.format_exc()}")
-    finally:
-        if client_telethon.is_connected():
-            await client_telethon.disconnect()
-
-# Запуск бота
-if __name__ == '__main__':
-    asyncio.run(main())
