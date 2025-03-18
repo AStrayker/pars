@@ -946,166 +946,9 @@ async def ask_for_limit(message, context):
         [InlineKeyboardButton("Другое" if lang == 'Русский' else "Інше" if lang == 'Украинский' else "Other" if lang == 'English' else "Andere", callback_data='limit_custom')]
     ]
     if is_paid:
-        keyboard.append([InlineKeyboardButton(texts['no_filter'], callback_data='no_filter')])
+        keyboard.append([InlineKeyboardButton("Макс/Без фильтров" if lang == 'Русский' else "Макс/Без фільтрів" if lang == 'Украинский' else "Max/No filters" if lang == 'English' else "Max/Ohne Filter", callback_data='max_no_filter')])
     await message.reply_text(texts['limit'], reply_markup=InlineKeyboardMarkup(keyboard))
     await log_to_channel(context, "Запрос лимита парсинга", context.user_data.get('username', 'Без username'))
-
-# Запрос фильтров
-async def ask_for_filters(message, context):
-    user_id = context.user_data.get('user_id', message.from_user.id)
-    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
-    texts = LANGUAGES[lang]
-    keyboard = [
-        [InlineKeyboardButton("Да" if lang == 'Русский' else "Так" if lang == 'Украинский' else "Yes" if lang == 'English' else "Ja", callback_data='filter_yes'),
-         InlineKeyboardButton("Нет" if lang == 'Русский' else "Ні" if lang == 'Украинский' else "No" if lang == 'English' else "Nein", callback_data='filter_no')],
-        [InlineKeyboardButton(texts['skip'], callback_data='skip_filters')]
-    ]
-    context.user_data['waiting_for_filters'] = True
-    context.user_data['current_filter'] = 'only_with_username'
-    context.user_data['filters'] = {'only_with_username': False, 'exclude_bots': False, 'only_active': False}
-    await message.reply_text(texts['filter_username'], reply_markup=InlineKeyboardMarkup(keyboard))
-    await log_to_channel(context, "Запрос фильтров: только с username", context.user_data.get('username', 'Без username'))
-
-# Парсинг авторов сообщений
-async def parse_commentators(link, limit):
-    try:
-        entity = await client_telethon.get_entity(link)
-        authors = []
-        async for message in client_telethon.iter_messages(entity, limit=limit):
-            if message.sender_id:
-                user = await client_telethon.get_entity(message.sender_id)
-                authors.append([
-                    user.id,
-                    user.username or "",
-                    user.first_name or "",
-                    user.last_name or "",
-                    "Bot" if user.bot else "",
-                    "",
-                    user
-                ])
-        return authors
-    except telethon_errors.RPCError as e:
-        raise e
-    except Exception as e:
-        print(f"Ошибка в parse_commentators: {str(e)}\n{traceback.format_exc()}")
-        return []
-
-# Парсинг участников чата
-async def parse_participants(link, limit):
-    try:
-        entity = await client_telethon.get_entity(link)
-        participants = []
-        async for user in client_telethon.iter_participants(entity, limit=limit):
-            participants.append([
-                user.id,
-                user.username or "",
-                user.first_name or "",
-                user.last_name or "",
-                "Bot" if user.bot else "",
-                "",
-                user
-            ])
-        return participants
-    except telethon_errors.RPCError as e:
-        raise e
-    except Exception as e:
-        print(f"Ошибка в parse_participants: {str(e)}\n{traceback.format_exc()}")
-        return []
-
-# Парсинг комментаторов поста
-async def parse_post_commentators(link, limit):
-    try:
-        parts = link.split('/')
-        post_id = int(parts[-1])
-        channel = parts[-2]
-        entity = await client_telethon.get_entity(channel)
-        comments = []
-        async for message in client_telethon.iter_messages(entity, ids=[post_id]):
-            async for comment in client_telethon.iter_messages(entity, reply_to=message.id, limit=limit):
-                user = await client_telethon.get_entity(comment.sender_id)
-                comments.append([
-                    user.id,
-                    user.username or "",
-                    user.first_name or "",
-                    user.last_name or "",
-                    "Bot" if user.bot else "",
-                    "",
-                    user
-                ])
-        return comments
-    except telethon_errors.RPCError as e:
-        raise e
-    except Exception as e:
-        print(f"Ошибка в parse_post_commentators: {str(e)}\n{traceback.format_exc()}")
-        return []
-
-# Парсинг номеров телефонов
-async def parse_phone_contacts(link, limit):
-    try:
-        entity = await client_telethon.get_entity(link)
-        contacts = []
-        async for user in client_telethon.iter_participants(entity, limit=limit):
-            if user.phone:
-                contacts.append([
-                    user.id,
-                    user.username or "",
-                    user.first_name or "",
-                    user.last_name or "",
-                    user.phone,
-                    "",
-                    user
-                ])
-        return contacts
-    except telethon_errors.RPCError as e:
-        raise e
-    except Exception as e:
-        print(f"Ошибка в parse_phone_contacts: {str(e)}\n{traceback.format_exc()}")
-        return []
-
-# Авторизация для закрытых чатов
-async def parse_auth_access(link, context):
-    try:
-        entity = await client_telethon.get_entity(link)
-        # Проверяем, является ли чат приватным
-        if hasattr(entity, 'private') and entity.private:
-            await context.bot.send_message(
-                chat_id=context.user_data['user_id'],
-                text=LANGUAGES[context.user_data['user']['language']]['auth_success']
-            )
-        else:
-            await context.bot.send_message(
-                chat_id=context.user_data['user_id'],
-                text=LANGUAGES[context.user_data['user']['language']]['auth_error']
-            )
-    except telethon_errors.RPCError as e:
-        await context.bot.send_message(
-            chat_id=context.user_data['user_id'],
-            text=LANGUAGES[context.user_data['user']['language']]['auth_error']
-        )
-        raise e
-    except Exception as e:
-        print(f"Ошибка в parse_auth_access: {str(e)}\n{traceback.format_exc()}")
-        await context.bot.send_message(
-            chat_id=context.user_data['user_id'],
-            text=LANGUAGES[context.user_data['user']['language']]['auth_error']
-        )
-
-# Асинхронная отправка сообщения о загрузке
-async def send_loading_message(message, context):
-    loading_symbols = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
-    i = 0
-    loading_msg = await message.reply_text("Загрузка " + loading_symbols[i])
-    while context.user_data.get('parsing_in_progress', False):
-        i = (i + 1) % len(loading_symbols)
-        try:
-            await loading_msg.edit_text("Загрузка " + loading_symbols[i])
-        except telegram_error.BadRequest:
-            pass
-        await asyncio.sleep(0.1)
-    try:
-        await loading_msg.delete()
-    except telegram_error.BadRequest:
-        pass
 
 # Обработка парсинга
 async def process_parsing(message, context):
@@ -1134,7 +977,7 @@ async def process_parsing(message, context):
     subscription = users[str(user_id)]['subscription']
     
     if 'limit' not in context.user_data:
-        context.user_data['limit'] = 150 if subscription['type'] == 'Бесплатная' else 1000
+        context.user_data['limit'] = 150 if subscription['type'] == 'Бесплатная' else 10000  # По умолчанию максимум
     
     context.user_data['parsing_in_progress'] = True
     asyncio.create_task(send_loading_message(message, context))
@@ -1151,7 +994,9 @@ async def process_parsing(message, context):
                 else:
                     normalized_link = link
                 
-                await client_telethon.get_entity(normalized_link.split('/')[-2] if context.user_data['parse_type'] in ['parse_post_commentators', 'parse_auth_access'] else normalized_link)
+                entity = await client_telethon.get_entity(normalized_link.split('/')[-2] if context.user_data['parse_type'] in ['parse_post_commentators', 'parse_auth_access'] else normalized_link)
+                channel_name = getattr(entity, 'title', str(entity.id))  # Используем название или ID канала
+                context.user_data['channel_name'] = channel_name
             except telethon_errors.ChannelPrivateError:
                 context.user_data['parsing_done'] = True
                 await message.reply_text(texts['no_access'].format(link=link))
@@ -1166,7 +1011,6 @@ async def process_parsing(message, context):
                 print(f"Ошибка парсинга (RPC): {str(e)}\n{traceback.format_exc()}")
                 return
             
-            # Ensure consistent indentation here
             limit = check_parse_limit(user_id, context.user_data['limit'], context.user_data['parse_type'])
             if context.user_data['parse_type'] == 'parse_authors':
                 data = await parse_commentators(normalized_link, limit)
@@ -1188,7 +1032,7 @@ async def process_parsing(message, context):
 
             all_data.extend(data)
 
-        # Применение фильтров
+        # Применение фильтров (исключение удалённых контактов уже в filter_data)
         filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False})
         filtered_data = filter_data(all_data, filters)
 
@@ -1205,7 +1049,7 @@ async def process_parsing(message, context):
         # Создание файла Excel
         excel_file = await create_excel_in_memory(filtered_data)
 
-        # Генерация чек-листа парсинга
+        # Генерация чек-листа парсинга и статистики
         username_filter = "✓" if filters['only_with_username'] else "✗"
         bots_filter = "✓" if filters['exclude_bots'] else "✗"
         active_filter = "✓" if filters['only_active'] else "✗"
@@ -1214,29 +1058,33 @@ async def process_parsing(message, context):
             bots_filter=bots_filter,
             active_filter=active_filter
         )
+        total_rows = len(filtered_data)
+        rows_without_username = sum(1 for row in filtered_data if not row[1])  # Индекс 1 - username
+        stats = f"\nСтатистика:\nОбщее количество строк: {total_rows}\nСтрок без username: {rows_without_username}"
 
         # Определение заголовка файла в зависимости от типа парсинга
+        channel_name = context.user_data.get('channel_name', 'unknown_channel')
         if context.user_data['parse_type'] == 'parse_authors':
             caption = texts['caption_commentators']
-            file_name = "commentators.xlsx"
+            file_name = f"{channel_name}_commentators.xlsx"
         elif context.user_data['parse_type'] == 'parse_participants':
             caption = texts['caption_participants']
-            file_name = "participants.xlsx"
+            file_name = f"{channel_name}_participants.xlsx"
         elif context.user_data['parse_type'] == 'parse_post_commentators':
             caption = texts['caption_post_commentators']
-            file_name = "post_commentators.xlsx"
+            file_name = f"{channel_name}_post_commentators.xlsx"
         elif context.user_data['parse_type'] == 'parse_phone_contacts':
             caption = texts['caption_phones']
-            file_name = "phone_contacts.xlsx"
+            file_name = f"{channel_name}_phone_contacts.xlsx"
         else:
             caption = "Результаты парсинга"
-            file_name = "results.xlsx"
+            file_name = f"{channel_name}_results.xlsx"
 
         # Отправка файла Excel
         await message.reply_document(
             document=excel_file,
             filename=file_name,
-            caption=f"{caption}\n\n{checklist}",
+            caption=f"{caption}\n\n{checklist}{stats}",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(texts['rate_parsing'], callback_data='rate_parsing')]
             ])
@@ -1247,7 +1095,7 @@ async def process_parsing(message, context):
             vcf_file = create_vcf_file(filtered_data)
             await message.reply_document(
                 document=vcf_file,
-                filename="phone_contacts.vcf",
+                filename=f"{channel_name}_phone_contacts.vcf",
                 caption=texts['caption_phones']
             )
 
