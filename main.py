@@ -1274,6 +1274,18 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await log_to_channel(context, f"Выбран тип парсинга: {query.data}", username)
         return
 
+    # Обработка команды "Сбор данных / Парсер"
+    if query.data == 'parser':
+        await query.message.edit_text(texts['parser'], reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("Участники чата" if lang == 'Русский' else "Учасники чату" if lang == 'Украинский' else "Chat participants" if lang == 'English' else "Chat-Teilnehmer", callback_data='parse_participants')],
+            [InlineKeyboardButton("Авторы комментариев" if lang == 'Русский' else "Автори коментарів" if lang == 'Украинский' else "Commentators" if lang == 'English' else "Kommentatoren", callback_data='parse_authors')],
+            [InlineKeyboardButton("Комментаторы поста" if lang == 'Русский' else "Коментатори поста" if lang == 'Украинский' else "Post commentators" if lang == 'English' else "Post-Kommentatoren", callback_data='parse_post_commentators')],
+            [InlineKeyboardButton(texts['phone_contacts'], callback_data='parse_phone_contacts')],
+            [InlineKeyboardButton(texts['auth_access'], callback_data='parse_auth_access')]
+        ]))
+        await log_to_channel(context, "Пользователь перешел к выбору типа парсинга через 'Сбор данных'", username)
+        return
+
     # Обработка команды "Идентификаторы"
     if query.data == 'identifiers':
         context.user_data['waiting_for_id'] = True
@@ -1385,10 +1397,22 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await log_to_channel(context, "Пользователь пропустил фильтры", username)
         return
 
-    # Обработка закрытия
+    # Обработка закрытия (вызов /home)
     if query.data in ['close', 'close_id']:
-        await query.message.delete()
-        await log_to_channel(context, "Сообщение закрыто пользователем", username)
+        # Сброс всех активных состояний
+        context.user_data.pop('waiting_for_id', None)
+        context.user_data.pop('waiting_for_limit', None)
+        context.user_data.pop('waiting_for_filters', None)
+        context.user_data.pop('parse_type', None)
+        context.user_data.pop('links', None)
+        context.user_data.pop('limit', None)
+        context.user_data.pop('filters', None)
+        context.user_data.pop('parsing_in_progress', None)
+        context.user_data.pop('parsing_done', None)
+        # Получение и отображение главного меню
+        menu_text, menu_keyboard = get_main_menu(user_id, context)
+        await query.message.edit_text(menu_text, reply_markup=menu_keyboard)
+        await log_to_channel(context, "Пользователь вернулся в главное меню через 'Закрыть'", username)
         return
 
     # Обработка продолжения после ID
@@ -1442,7 +1466,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.edit_text(texts['thanks'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
         await log_to_channel(context, f"Пользователь оценил парсинг: {rating}/5", username)
         return
-
 # Главная функция
 def main():
     application = Application.builder().token(BOT_TOKEN).build()
