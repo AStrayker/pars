@@ -1024,6 +1024,21 @@ async def ask_for_limit(message, context):
     await message.reply_text(texts['limit'], reply_markup=InlineKeyboardMarkup(keyboard))
     await log_to_channel(context, "Запрос лимита парсинга", context.user_data.get('username', 'Без username'))
 
+# Запрос фильтров для парсинга
+async def ask_for_filters(message, context):
+    user_id = context.user_data.get('user_id', message.from_user.id)
+    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
+    texts = LANGUAGES[lang]
+    keyboard = [
+        [InlineKeyboardButton("Да" if lang == 'Русский' else "Так" if lang == 'Украинский' else "Yes" if lang == 'English' else "Ja", callback_data='filter_yes'),
+         InlineKeyboardButton("Нет" if lang == 'Русский' else "Ні" if lang == 'Украинский' else "No" if lang == 'English' else "Nein", callback_data='filter_no')],
+        [InlineKeyboardButton(texts['skip'], callback_data='skip_filters')]
+    ]
+    context.user_data['current_filter'] = 'only_with_username'
+    context.user_data['waiting_for_filters'] = True
+    await message.reply_text(texts['filter_username'], reply_markup=InlineKeyboardMarkup(keyboard))
+    await log_to_channel(context, "Запрос фильтров: только с username", context.user_data.get('username', 'Без username'))
+
 # Обработка парсинга
 async def process_parsing(message, context):
     user_id = message.from_user.id if message.from_user else context.user_data.get('user_id')
@@ -1531,9 +1546,11 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(button))
 
-    # Запуск бота
-    print("Бот запущен...")
-    app.run_polling()
-
-if __name__ == '__main__':
-    main()
+    if __name__ == '__main__':
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        print("Бот остановлен пользователем.")
+    finally:
+        loop.close()
