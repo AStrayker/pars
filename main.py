@@ -2,6 +2,7 @@ import asyncio
 import os
 import sys
 import traceback
+from io import BytesIO
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from telethon import TelegramClient, errors as telethon_errors
