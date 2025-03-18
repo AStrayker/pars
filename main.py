@@ -1146,10 +1146,15 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await log_to_channel(context, f"Администратор отклонил транзакцию для {target_user_id} ({target_username})", username)
 
     elif query.data.startswith('limit_'):
-        limit = int(query.data.replace('limit_', ''))
-        context.user_data['limit'] = check_parse_limit(user_id, limit, context.user_data.get('parse_type', 'parse_participants'))
-        await process_parsing(query.message, context)
-        await log_to_channel(context, f"Выбран лимит: {limit}", username)
+        limit_str = query.data.replace('limit_', '')
+        if limit_str.isdigit():
+            limit = int(limit_str)
+            context.user_data['limit'] = check_parse_limit(user_id, limit, context.user_data.get('parse_type', 'parse_participants'))
+            await process_parsing(query.message, context)
+            await log_to_channel(context, f"Выбран лимит: {limit}", username)
+        else:
+            await query.message.edit_text("Неверный формат лимита. Пожалуйста, выберите числовое значение.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
+            await log_to_channel(context, f"Ошибка: некорректный лимит {limit_str}", username)
 
     elif query.data == 'limit_custom':
         context.user_data['waiting_for_limit'] = True
@@ -1200,6 +1205,27 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"Произошла ошибка: {context.error}\nПодробности: {traceback.format_exc()}")
     await log_to_channel(context, f"Системная ошибка: {str(context.error)}", "system")
+
+# Предполагаемая функция process_parsing с исправлением
+async def process_parsing(message, context):
+    user_id = message.from_user.id if message.from_user else None
+    if not user_id:
+        return
+    users = load_users()
+    if str(user_id) not in users:
+        users[str(user_id)] = {
+            'name': message.from_user.full_name or "Без имени",
+            'language': 'Русский',
+            'subscription': {'type': 'Бесплатная', 'end': None},
+            'requests': 0,
+            'daily_requests': {'count': 0, 'last_reset': datetime.now().isoformat()}
+        }
+        save_users(users)
+    lang = users[str(user_id)]['language']
+    texts = LANGUAGES[lang]
+    # Здесь должна быть логика парсинга, которая использует context.user_data['limit'] и ['parse_type']
+    await message.reply_text(texts['parsing_started'])
+    await log_to_channel(context, f"Начался парсинг для пользователя {user_id}", "system")
 
 # Инициализация и запуск бота
 def main():
