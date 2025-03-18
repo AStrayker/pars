@@ -1166,7 +1166,8 @@ async def process_parsing(message, context):
                 print(f"Ошибка парсинга (RPC): {str(e)}\n{traceback.format_exc()}")
                 return
             
-                        limit = check_parse_limit(user_id, context.user_data['limit'], context.user_data['parse_type'])
+            # Ensure consistent indentation here
+            limit = check_parse_limit(user_id, context.user_data['limit'], context.user_data['parse_type'])
             if context.user_data['parse_type'] == 'parse_authors':
                 data = await parse_commentators(normalized_link, limit)
             elif context.user_data['parse_type'] == 'parse_participants':
