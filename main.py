@@ -472,7 +472,7 @@ def check_parse_limit(user_id, limit, parse_type):
     if subscription['type'] == 'Бесплатная':
         return min(limit, 150)
     else:
-        return min(limit, 10000)  # Убедитесь, что лимит действительно 10000
+        return min(limit, 10000)
 
 # Создание файла Excel
 async def create_excel_in_memory(data):
@@ -1024,21 +1024,6 @@ async def ask_for_limit(message, context):
     await message.reply_text(texts['limit'], reply_markup=InlineKeyboardMarkup(keyboard))
     await log_to_channel(context, "Запрос лимита парсинга", context.user_data.get('username', 'Без username'))
 
-# Запрос фильтров для парсинга
-async def ask_for_filters(message, context):
-    user_id = context.user_data.get('user_id', message.from_user.id)
-    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
-    texts = LANGUAGES[lang]
-    keyboard = [
-        [InlineKeyboardButton("Да" if lang == 'Русский' else "Так" if lang == 'Украинский' else "Yes" if lang == 'English' else "Ja", callback_data='filter_yes'),
-         InlineKeyboardButton("Нет" if lang == 'Русский' else "Ні" if lang == 'Украинский' else "No" if lang == 'English' else "Nein", callback_data='filter_no')],
-        [InlineKeyboardButton(texts['skip'], callback_data='skip_filters')]
-    ]
-    context.user_data['current_filter'] = 'only_with_username'
-    context.user_data['waiting_for_filters'] = True
-    await message.reply_text(texts['filter_username'], reply_markup=InlineKeyboardMarkup(keyboard))
-    await log_to_channel(context, "Запрос фильтров: только с username", context.user_data.get('username', 'Без username'))
-
 # Обработка парсинга
 async def process_parsing(message, context):
     user_id = message.from_user.id if message.from_user else context.user_data.get('user_id')
@@ -1222,14 +1207,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     users = load_users()
     lang = users.get(str(user_id), {}).get('language', 'Русский')
     texts = LANGUAGES[lang]
-
-    # Удаление старого сообщения
-    if query.message.message_id < context.user_data.get('last_message_id', 0):
-        await query.message.delete()
-        await query.answer("Это сообщение больше не активно. Обновите меню с помощью /home.", show_alert=True)
-        return
-
-    context.user_data['last_message_id'] = query.message.message_id
 
     # Проверка, является ли сообщение старым (например, по message_id или timestamp)
     # Здесь можно добавить логику проверки времени или контекста, но для простоты проверяем только message_id
@@ -1546,11 +1523,9 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(button))
 
-   if __name__ == '__main__':  # строка 1549
-    loop = asyncio.get_event_loop()  # строка 1550
-    try:
-        loop.run_until_complete(main())
-    except KeyboardInterrupt:
-        print("Бот остановлен пользователем.")
-    finally:
-        loop.close()
+    # Запуск бота
+    print("Бот запущен...")
+    app.run_polling()
+
+if __name__ == '__main__':
+    main()
