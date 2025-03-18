@@ -475,19 +475,28 @@ def check_parse_limit(user_id, limit, parse_type):
 
 # Создание файла Excel
 async def create_excel_in_memory(data):
-    df = pd.DataFrame(data, columns=['ID', 'Username', 'First Name', 'Last Name', 'Country', 'Age', 'Nickname'])
-    df['Nickname'] = '@' + df['Username'].astype(str)
-    excel_file = io.BytesIO()
-    with pd.ExcelWriter(excel_file, engine='xlsxwriter') as writer:
+    if not data:
+        return BytesIO()  # Возвращаем пустой файл, если данных нет
+
+    # Определяем количество столбцов на основе первой строки данных
+    num_columns = len(data[0])
+    
+    # Определяем заголовки в зависимости от количества столбцов
+    default_columns = ['ID', 'Username', 'First Name', 'Phone', 'Status', 'Last Name', 'Country', 'Age', 'Nickname']
+    columns = default_columns[:num_columns]  # Берём только нужное количество заголовков
+    
+    # Создаём DataFrame
+    df = pd.DataFrame(data, columns=columns)
+    
+    # Создаём Excel-файл в памяти
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Sheet1')
         workbook = writer.book
         worksheet = writer.sheets['Sheet1']
-        for idx, col in enumerate(df.columns):
-            series = df[col]
-            max_length = max((series.astype(str).map(len).max(), len(str(series.name)))) + 2
-            worksheet.set_column(idx, idx, max_length)
-    excel_file.seek(0)
-    return excel_file
+        worksheet.set_column(f'A:{chr(65 + num_columns - 1)}', 20)  # Устанавливаем ширину столбцов
+    output.seek(0)
+    return output
 
 # Создание VCF файла для контактов
 def create_vcf_file(data):
