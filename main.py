@@ -14,6 +14,23 @@ import pandas as pd
 import requests
 import vobject
 
+# Асинхронная отправка сообщения о загрузке
+async def send_loading_message(message, context):
+    loading_symbols = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    i = 0
+    loading_msg = await message.reply_text("Загрузка " + loading_symbols[i])
+    while context.user_data.get('parsing_in_progress', False):
+        i = (i + 1) % len(loading_symbols)
+        try:
+            await loading_msg.edit_text("Загрузка " + loading_symbols[i])
+        except telegram_error.BadRequest:
+            pass
+        await asyncio.sleep(0.1)
+    try:
+        await loading_msg.delete()
+    except telegram_error.BadRequest:
+            pass
+
 # Указываем переменные через код или переменные среды
 API_ID = int(os.environ.get('API_ID', 25281388))
 API_HASH = os.environ.get('API_HASH', 'a2e719f61f40ca912567c7724db5764e')
