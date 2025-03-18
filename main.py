@@ -1211,17 +1211,24 @@ def get_main_menu(user_id, context):
 
 # Обработчик ошибок
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id if update.effective_user else None
-    username = update.effective_user.username if update.effective_user else "Неизвестно"
-    name = update.effective_user.full_name if update.effective_user else "Неизвестно"
+    # Проверка, существует ли update и effective_user
+    user_id = None
+    username = "Неизвестно"
+    name = "Неизвестно"
+    
+    if update and hasattr(update, 'effective_user') and update.effective_user:
+        user_id = update.effective_user.id
+        username = update.effective_user.username if update.effective_user.username else "Неизвестно"
+        name = update.effective_user.full_name if update.effective_user.full_name else "Неизвестно"
+    
     error = context.error
-
     lang = load_users().get(str(user_id), {}).get('language', 'Русский') if user_id else 'Русский'
     texts = LANGUAGES[lang]
 
     error_message = f"Произошла ошибка: {str(error)}\nПодробности: {traceback.format_exc()}"
     print(error_message)
 
+    # Отправка уведомления только если есть user_id
     if user_id:
         try:
             await context.bot.send_message(
