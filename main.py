@@ -1512,7 +1512,16 @@ async def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button))
 
+    # Запускаем polling без asyncio.run()
     await application.run_polling()
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    # Вместо asyncio.run(main()) запускаем цикл событий напрямую
+    loop = asyncio.get_event_loop()
+    try:
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        print("Бот остановлен пользователем")
+    finally:
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
