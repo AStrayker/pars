@@ -9,3 +9,4 @@ python-dotenv==1.0.1
 requests==2.32.3
 firebase_admin
 faker
+python-telegram-bot[job-queue]
