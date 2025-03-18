@@ -1495,11 +1495,73 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         )
                     await log_to_channel(context, f"Ошибка проверки подписки: {str(e)}", username)
 
-        elif query.data == 'identifiers':
-            await query.edit_message_text(
-                texts['identifiers'],
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close_menu')]])
-            )
+        # Обработчик кнопок (фрагмент с identifiers)
+elif query.data == 'identifiers':
+    await query.edit_message_text(
+        texts['identifiers'],
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close_menu')]])
+    )
+    context.user_data['waiting_for_id'] = True
+    await log_to_channel(context, "Запрос идентификаторов", username)
+    await query.answer("Отправьте @username, ссылку или перешлите сообщение для получения ID.")
+
+# Обработчик текстовых сообщений (фрагмент с waiting_for_id)
+if context.user_data.get('waiting_for_id', False):
+    try:
+        entity = None
+        message_text = update.message.text.strip()
+        
+        # Проверка пересланного сообщения
+        if update.message.reply_to_message:
+            forwarded_user = update.message.reply_to_message.from_user
+            if forwarded_user:
+                entity = forwarded_user
+                entity_id = forwarded_user.id
+            else:
+                await update.message.reply_text(texts['entity_error'])
+                await log_to_channel(context, "Не удалось получить ID из пересланного сообщения", username)
+                return
+        # Проверка @username или ссылки
+        elif message_text.startswith('@') or 't.me' in message_text:
+            if message_text.startswith('@'):
+                normalized_link = f"https://t.me/{message_text[1:]}"
+            elif 't.me' in message_text:
+                normalized_link = message_text
+            else:
+                normalized_link = f"https://t.me/{message_text}"
+            
+            entity = await client_telethon.get_entity(normalized_link)
+            entity_id = entity.id if hasattr(entity, 'id') else int(normalized_link.split('/')[-1]) if '/' in normalized_link else None
+            
+            if not entity_id:
+                await update.message.reply_text(texts['invalid_link'])
+                await log_to_channel(context, f"Некорректный ввод для ID: {message_text}", username)
+                return
+        else:
+            await update.message.reply_text(texts['invalid_link'])
+            await log_to_channel(context, f"Некорректный формат ввода для ID: {message_text}", username)
+            return
+
+        # Отправка результата
+        await update.message.reply_text(
+            texts['id_result'].format(id=entity_id),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton(texts['close'], callback_data='close_id'),
+                 InlineKeyboardButton(texts['continue_id'], callback_data='continue_id')]
+            ])
+        )
+        await log_to_channel(context, f"ID найден: {entity_id} для {message_text}", username)
+        context.user_data['waiting_for_id'] = False
+
+    except telethon_errors.RPCError as e:
+        await update.message.reply_text(texts['entity_error'])
+        await log_to_channel(context, f"Ошибка получения ID: {str(e)} для {message_text}", username)
+        context.user_data['waiting_for_id'] = False
+    except Exception as e:
+        await update.message.reply_text(f"Произошла ошибка: {str(e)}")
+        await log_to_channel(context, f"Неизвестная ошибка при получении ID: {str(e)} для {message_text}", username)
+        context.user_data['waiting_for_id'] = False
+    return
             context.user_data['waiting_for_id'] = True
             await log_to_channel(context, "Запрос идентификаторов", username)
 
