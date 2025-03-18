@@ -14,6 +14,53 @@ import pandas as pd
 import requests
 import vobject
 
+from telethon.tl.types import ChannelParticipantsSearch
+from telethon.errors import ChannelPrivateError
+
+# Функция для парсинга участников чата
+async def parse_participants(link, limit):
+    try:
+        # Получаем сущность (чат или канал) по ссылке
+        entity = await client_telethon.get_entity(link)
+        all_participants = []
+
+        # Используем метод iter_participants для получения участников
+        async for user in client_telethon.iter_participants(entity, limit=limit):
+            if user.username or user.phone or user.first_name:  # Исключаем "удалённые аккаунты"
+                participant_data = [
+                    user.id,  # ID пользователя
+                    user.username or "",  # Username
+                    user.first_name or "",  # Имя
+                    user.phone or "",  # Номер телефона (если доступен)
+                    "active" if user.status else "inactive"  # Статус активности
+                ]
+                all_participants.append(participant_data)
+
+        return all_participants
+
+    except ChannelPrivateError:
+        return []  # Пустой список при приватном чате
+    except Exception as e:
+        print(f"Ошибка в parse_participants: {str(e)}")
+        return []
+
+# Аналогичные функции для других типов парсинга
+async def parse_commentators(link, limit):
+    # Логика для парсинга авторов комментариев (например, из сообщений)
+    return []
+
+async def parse_post_commentators(link, limit):
+    # Логика для парсинга комментаторов поста
+    return []
+
+async def parse_phone_contacts(link, limit):
+    # Логика для парсинга номеров телефонов
+    return []
+
+async def parse_auth_access(link, context):
+    # Логика для предоставления доступа к закрытым чатам
+    return
+
 # Асинхронная отправка сообщения о загрузке
 async def send_loading_message(message, context):
     loading_symbols = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
