@@ -1134,6 +1134,15 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = users.get(str(user_id), {}).get('language', 'Русский')
     texts = LANGUAGES[lang]
 
+    # Проверка, является ли сообщение старым (например, по message_id или timestamp)
+    # Здесь можно добавить логику проверки времени или контекста, но для простоты проверяем только message_id
+    if query.message.message_id < context.user_data.get('last_message_id', 0):
+        await query.answer("Эта кнопка больше не активна. Обновите меню с помощью /home.", show_alert=True)
+        return
+
+    # Обновление последнего message_id
+    context.user_data['last_message_id'] = query.message.message_id
+
     # Обработка выбора языка
     if query.data.startswith('lang_'):
         lang = query.data.split('_')[1]
@@ -1266,11 +1275,12 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await log_to_channel(context, "Пользователь пропустил выбор лимита", username)
         return
 
-    if query.data == 'no_filter':
+    if query.data == 'max_no_filter':
+        context.user_data['limit'] = 10000 if users[str(user_id)]['subscription']['type'].startswith('Платная') else 150
         context.user_data['filters'] = {'only_with_username': False, 'exclude_bots': False, 'only_active': False}
         await query.message.delete()
         await process_parsing(query.message, context)
-        await log_to_channel(context, "Пользователь пропустил фильтры", username)
+        await log_to_channel(context, "Пользователь выбрал максимум без фильтров", username)
         return
 
     # Обработка фильтров
