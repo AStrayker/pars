@@ -424,6 +424,7 @@ def check_request_limit(user_id):
     return daily_requests['count'] < max_requests, 24 - (now - last_reset).seconds // 3600
 
 # Проверка лимита парсинга
+# Проверка лимита парсинга
 def check_parse_limit(user_id, requested_limit, parse_type):
     users = load_users()
     user_id_str = str(user_id)
@@ -433,7 +434,7 @@ def check_parse_limit(user_id, requested_limit, parse_type):
     if subscription['type'].startswith('Платная') and subscription['end']:
         if datetime.fromisoformat(subscription['end']) < now:
             update_user_data(user_id, user.get('name', 'Неизвестно'), None, subscription={'type': 'Бесплатная', 'end': None})
-            subscription = {'type': 'Бесплатная', 'end': None'}
+            subscription = {'type': 'Бесплатная', 'end': None}
     
     max_limit = 150 if subscription['type'] == 'Бесплатная' else 10000
     return min(requested_limit, max_limit)
