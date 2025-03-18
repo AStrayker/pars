@@ -472,7 +472,7 @@ def check_parse_limit(user_id, limit, parse_type):
     if subscription['type'] == 'Бесплатная':
         return min(limit, 150)
     else:
-        return min(limit, 10000)
+        return min(limit, 10000)  # Убедитесь, что лимит действительно 10000
 
 # Создание файла Excel
 async def create_excel_in_memory(data):
@@ -1207,6 +1207,14 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     users = load_users()
     lang = users.get(str(user_id), {}).get('language', 'Русский')
     texts = LANGUAGES[lang]
+
+    # Удаление старого сообщения
+    if query.message.message_id < context.user_data.get('last_message_id', 0):
+        await query.message.delete()
+        await query.answer("Это сообщение больше не активно. Обновите меню с помощью /home.", show_alert=True)
+        return
+
+    context.user_data['last_message_id'] = query.message.message_id
 
     # Проверка, является ли сообщение старым (например, по message_id или timestamp)
     # Здесь можно добавить логику проверки времени или контекста, но для простоты проверяем только message_id
