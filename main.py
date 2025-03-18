@@ -732,13 +732,13 @@ async def note(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Обработчик текстовых сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
+    message = update.message
+    user_id = message.from_user.id
+    username = message.from_user.username or "Без username"
+    name = message.from_user.full_name or "Без имени"
     context.user_data['user_id'] = user_id
-    username = update.effective_user.username or "Без username"
-    name = update.effective_user.full_name or "Без имени"
     context.user_data['username'] = username
     users = load_users()
-    text = update.message.text.strip() if update.message.text else ""
     lang = users.get(str(user_id), {}).get('language', 'Русский')
     texts = LANGUAGES[lang]
 
@@ -944,16 +944,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Обработка лимита парсинга
     if context.user_data.get('waiting_for_limit'):
         try:
-            limit = int(text)
-            max_limit = 150 if users[str(user_id)]['subscription']['type'] == 'Бесплатная' else 10000
-            if limit <= 0 or limit > max_limit:
-                await update.message.reply_text(texts['invalid_limit'].format(max_limit=max_limit), reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit')]]))
-                return
+            limit = int(message.text)
+            if limit <= 0:
+                raise ValueError
             context.user_data['limit'] = limit
-            del context.user_data['waiting_for_limit']
-            await ask_for_filters(update.message, context)
+            context.user_data['waiting_for_limit'] = False
+            await ask_for_filters(message, context)  # Переходим к фильтрам после ввода лимита
+            await log_to_channel(context, f"Пользователь ввёл лимит: {limit}", username)
         except ValueError:
-            await update.message.reply_text(texts['invalid_number'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit')]]))
+            await message.reply_text("Пожалуйста, введите корректное число больше 0.")
         return
 
     # Обработка фильтров парсинга
@@ -968,27 +967,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     # Обработка ссылок для парсинга
-    if context.user_data.get('parse_type') in ['parse_authors', 'parse_participants', 'parse_phone_contacts', 'parse_auth_access', 'parse_post_commentators']:
-        if text:
-            links = text.split('\n') if '\n' in text else [text]
-            normalized_links = []
-            for link in links:
-                link = link.strip()
-                if link.startswith('https://t.me/'):
-                    normalized_links.append(link)
-                elif link.startswith('@'):
-                    normalized_links.append(f"https://t.me/{link[1:]}")
-                elif not link.startswith('http'):
-                    normalized_links.append(f"https://t.me/{link}")
-                else:
-                    normalized_links.append(link)
-            
-            if context.user_data['parse_type'] == 'parse_post_commentators':
-                valid_links = [link for link in normalized_links if '/'.join(link.split('/')[3:]).strip()]
-                if not valid_links:
-                    await update.message.reply_text(texts['invalid_link'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['fix_link'], callback_data='fix_link')]]))
-                    context.user_data['last_input'] = text
-                    return
+    if context.user_data.get('parse_type') in ['parse_authors', 'parse_participants', 'parse_post_commentators', 'parse_phone_contacts', 'parse_auth_access']:
+        context.user_data['last_input'] = message.text
+        try:
+            link = message.text
+            if link.startswith('@'):
+                link = f"https://t.me/{link[1:]}"
+            elif not link.startswith('http'):
+                link = f"https://t.me/{link}"
+            await client_telethon.connect()
+            await client_telethon.get_entity(link.split('/')[-2] if context.user_data['parse_type'] in ['parse_post_commentators', 'parse_auth_access'] else link)
+            await client_telethon.disconnect()
+            context.user_data['links'] = [link]
+            await ask_for_limit(message, context)
+        except telethon_errors.RPCError:
+            keyboard = [[InlineKeyboardButton(texts['fix_link'], callback_data='fix_link')]]
+            await message.reply_text(texts['invalid_link'], reply_markup=InlineKeyboardMarkup(keyboard))
+            await log_to_channel(context, "Некорректная ссылка", username)
+        return
                 context.user_data['links'] = valid_links
             else:
                 context.user_data['links'] = normalized_links
@@ -1024,6 +1020,20 @@ async def ask_for_limit(message, context):
     await message.reply_text(texts['limit'], reply_markup=InlineKeyboardMarkup(keyboard))
     await log_to_channel(context, "Запрос лимита парсинга", context.user_data.get('username', 'Без username'))
 
+# Запрос фильтров для парсинга
+async def ask_for_filters(message, context):
+    user_id = context.user_data.get('user_id', message.from_user.id)
+    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
+    texts = LANGUAGES[lang]
+    keyboard = [
+        [InlineKeyboardButton("Да" if lang == 'Русский' else "Так" if lang == 'Украинский' else "Yes" if lang == 'English' else "Ja", callback_data='filter_yes'),
+         InlineKeyboardButton("Нет" if lang == 'Русский' else "Ні" if lang == 'Украинский' else "No" if lang == 'English' else "Nein", callback_data='filter_no')],
+        [InlineKeyboardButton(texts['skip'], callback_data='skip_filters')]
+    ]
+    context.user_data['current_filter'] = 'only_with_username'
+    await message.reply_text(texts['filter_username'], reply_markup=InlineKeyboardMarkup(keyboard))
+    await log_to_channel(context, "Запрос фильтров: только с username", context.user_data.get('username', 'Без username'))
+    
 # Обработка парсинга
 async def process_parsing(message, context):
     user_id = message.from_user.id if message.from_user else context.user_data.get('user_id')
@@ -1230,20 +1240,20 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     # Проверка подписки
-    if query.data == 'subscribed':
-        try:
-            member = await context.bot.get_chat_member(SUBSCRIPTION_CHANNEL_ID, user_id)
-            if member.status in ['member', 'administrator', 'creator']:
-                menu_text, menu_keyboard = get_main_menu(user_id, context)
-                await query.message.delete()
-                await query.message.reply_text(menu_text, reply_markup=menu_keyboard)
-                await log_to_channel(context, f"Пользователь подписан на канал", username)
-            else:
-                await query.message.reply_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]]))
-                await log_to_channel(context, f"Пользователь не подписан на канал", username)
-        except telegram_error.BadRequest as e:
-            await query.message.reply_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]]))
-            await log_to_channel(context, f"Ошибка проверки подписки: {str(e)}", username)
+    try:
+        member = await context.bot.get_chat_member(SUBSCRIPTION_CHANNEL_ID, user_id)
+        if member.status not in ['member', 'administrator', 'creator']:
+            await message.reply_text(
+                texts['subscribe'].format(channel=SUBSCRIPTION_CHANNEL_ID),
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]])
+            )
+            return
+    except telegram_error.BadRequest as e:
+        await message.reply_text(
+            texts['subscribe'].format(channel=SUBSCRIPTION_CHANNEL_ID),
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]])
+        )
+        await log_to_channel(context, f"Ошибка проверки подписки: {str(e)}", username)
         return
 
     # Обработка кнопки "Идентификаторы"
