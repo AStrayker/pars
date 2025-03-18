@@ -1201,7 +1201,7 @@ async def process_parsing(message, context):
     except telethon_errors.RPCError as e:
         context.user_data['parsing_in_progress'] = False
         await message.reply_text(texts['rpc_error'].format(e=str(e)))
-                await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
+        await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
     except Exception as e:
         context.user_data['parsing_in_progress'] = False
         await message.reply_text(f"Произошла ошибка: {str(e)}")
