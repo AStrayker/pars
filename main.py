@@ -1056,6 +1056,8 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = query.from_user.id
     username = query.from_user.username
     name = query.from_user.full_name or "Без имени"
+    if not hasattr(context, 'user_data'):
+        context.user_data = {}
     context.user_data['username'] = username
     users = load_users()
     
@@ -1168,7 +1170,12 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == 'skip_limit':
         context.user_data['limit'] = 150 if subscription['type'] == 'Бесплатная' else 10000
-        await query.message.delete()
+        try:
+            await query.message.delete()
+        except telegram_error.BadRequest:
+            await query.message.edit_text("Сообщение закрыто.", reply_markup=InlineKeyboardMarkup([]))
+        # Отправляем сообщение перед началом парсинга
+        await query.message.reply_text(texts['parsing_started'])
         await process_parsing(query.message, context)
         await log_to_channel(context, f"Пользователь пропустил выбор лимита, лимит: {context.user_data['limit']}", username)
 
@@ -1224,7 +1231,8 @@ async def process_parsing(message, context):
     lang = users[str(user_id)]['language']
     texts = LANGUAGES[lang]
     # Здесь должна быть логика парсинга, которая использует context.user_data['limit'] и ['parse_type']
-    await message.reply_text(texts['parsing_started'])
+    # Для теста отправляем сообщение
+    await message.reply_text(f"{texts['parsing_started']}\nТип: {context.user_data.get('parse_type', 'не указан')}\nЛимит: {context.user_data.get('limit', 'не указан')}")
     await log_to_channel(context, f"Начался парсинг для пользователя {user_id}", "system")
 
 # Инициализация и запуск бота
