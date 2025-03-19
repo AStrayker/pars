@@ -1147,7 +1147,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(chat_id=target_user_id, text=texts['payment_error'])
         await log_to_channel(context, f"Администратор отклонил транзакцию для {target_user_id} ({target_username})", username)
 
-    elif query.data.startswith('limit_'):
+    elif query.data.startswith('limit_') and query.data != 'limit_custom':
         limit_str = query.data.replace('limit_', '')
         if limit_str.isdigit():
             limit = int(limit_str)
@@ -1160,7 +1160,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == 'limit_custom':
         context.user_data['waiting_for_limit'] = True
-        await query.message.edit_text(texts['limit'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit')]]))
+        await query.message.edit_text(texts['limit'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit'), InlineKeyboardButton(texts['close'], callback_data='close')]]))
         await log_to_channel(context, "Пользователь перешел к вводу кастомного лимита", username)
 
     elif query.data == 'max_limit' and subscription['type'].startswith('Платная'):
@@ -1174,7 +1174,6 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.delete()
         except telegram_error.BadRequest:
             await query.message.edit_text("Сообщение закрыто.", reply_markup=InlineKeyboardMarkup([]))
-        # Отправляем сообщение перед началом парсинга
         await query.message.reply_text(texts['parsing_started'])
         await process_parsing(query.message, context)
         await log_to_channel(context, f"Пользователь пропустил выбор лимита, лимит: {context.user_data['limit']}", username)
@@ -1192,7 +1191,9 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.delete()
         except telegram_error.BadRequest:
             await query.message.edit_text("Сообщение закрыто.", reply_markup=InlineKeyboardMarkup([]))
-        await log_to_channel(context, "Сообщение закрыто пользователем", username)
+        # Вызываем команду /home
+        await home(update, context)
+        await log_to_channel(context, "Сообщение закрыто пользователем, вызвана команда /home", username)
 
     elif query.data == 'rate_parsing':
         keyboard = [
@@ -1208,12 +1209,31 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.edit_text(texts['thanks'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
         await log_to_channel(context, f"Пользователь оценил парсинг: {rating}/5", username)
 
-# Обработчик ошибок
-async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    print(f"Произошла ошибка: {context.error}\nПодробности: {traceback.format_exc()}")
-    await log_to_channel(context, f"Системная ошибка: {str(context.error)}", "system")
+# Обработчик текстовых сообщений для обработки кастомного лимита
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    username = update.effective_user.username or "Без username"
+    users = load_users()
+    lang = users.get(str(user_id), {}).get('language', 'Русский')
+    texts = LANGUAGES[lang]
 
-# Предполагаемая функция process_parsing с исправлением
+    if context.user_data.get('waiting_for_limit'):
+        limit_str = update.message.text.strip()
+        if limit_str.isdigit():
+            limit = int(limit_str)
+            context.user_data['limit'] = check_parse_limit(user_id, limit, context.user_data.get('parse_type', 'parse_participants'))
+            context.user_data['waiting_for_limit'] = False
+            await update.message.reply_text(texts['parsing_started'])
+            await process_parsing(update.message, context)
+            await log_to_channel(context, f"Пользователь указал кастомный лимит: {limit}", username)
+        else:
+            await update.message.reply_text("Пожалуйста, введите числовое значение для лимита.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
+            await log_to_channel(context, f"Ошибка: некорректный кастомный лимит {limit_str}", username)
+    # Здесь может быть другая логика обработки сообщений, например, для парсинга ссылок
+    else:
+        await update.message.reply_text("Пожалуйста, выберите действие из меню.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['home_cmd'], callback_data='home')]]))
+
+# Предполагаемая функция process_parsing
 async def process_parsing(message, context):
     user_id = message.from_user.id if message.from_user else None
     if not user_id:
@@ -1230,10 +1250,21 @@ async def process_parsing(message, context):
         save_users(users)
     lang = users[str(user_id)]['language']
     texts = LANGUAGES[lang]
-    # Здесь должна быть логика парсинга, которая использует context.user_data['limit'] и ['parse_type']
-    # Для теста отправляем сообщение
     await message.reply_text(f"{texts['parsing_started']}\nТип: {context.user_data.get('parse_type', 'не указан')}\nЛимит: {context.user_data.get('limit', 'не указан')}")
     await log_to_channel(context, f"Начался парсинг для пользователя {user_id}", "system")
+
+# Обработчик команды /home
+async def home(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    username = update.effective_user.username or "Без username"
+    menu_text, menu_keyboard = get_main_menu(user_id, context)
+    await update.effective_message.reply_text(menu_text, reply_markup=menu_keyboard)
+    await log_to_channel(context, "Пользователь вернулся в главное меню через /home", username)
+
+# Обработчик ошибок
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print(f"Произошла ошибка: {context.error}\nПодробности: {traceback.format_exc()}")
+    await log_to_channel(context, f"Системная ошибка: {str(context.error)}", "system")
 
 # Инициализация и запуск бота
 def main():
