@@ -1160,7 +1160,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == 'limit_custom':
         context.user_data['waiting_for_limit'] = True
-        await query.message.edit_text(texts['limit'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit'), InlineKeyboardButton(texts['close'], callback_data='close')]]))
+        await query.message.edit_text(texts['limit'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data='skip_limit')]]))
         await log_to_channel(context, "Пользователь перешел к вводу кастомного лимита", username)
 
     elif query.data == 'max_limit' and subscription['type'].startswith('Платная'):
@@ -1191,9 +1191,9 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.message.delete()
         except telegram_error.BadRequest:
             await query.message.edit_text("Сообщение закрыто.", reply_markup=InlineKeyboardMarkup([]))
+        await log_to_channel(context, "Сообщение закрыто пользователем", username)
         # Вызываем команду /home
         await home(update, context)
-        await log_to_channel(context, "Сообщение закрыто пользователем, вызвана команда /home", username)
 
     elif query.data == 'rate_parsing':
         keyboard = [
@@ -1209,12 +1209,27 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.message.edit_text(texts['thanks'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
         await log_to_channel(context, f"Пользователь оценил парсинг: {rating}/5", username)
 
-# Обработчик текстовых сообщений для обработки кастомного лимита
+# Обработчик текстовых сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-    username = update.effective_user.username or "Без username"
+    username = update.effective_user.username
+    name = update.effective_user.full_name or "Без имени"
+    if not hasattr(context, 'user_data'):
+        context.user_data = {}
+    context.user_data['username'] = username
     users = load_users()
-    lang = users.get(str(user_id), {}).get('language', 'Русский')
+    
+    if str(user_id) not in users:
+        users[str(user_id)] = {
+            'name': name,
+            'language': 'Русский',
+            'subscription': {'type': 'Бесплатная', 'end': None},
+            'requests': 0,
+            'daily_requests': {'count': 0, 'last_reset': datetime.now().isoformat()}
+        }
+        save_users(users)
+    
+    lang = users[str(user_id)]['language']
     texts = LANGUAGES[lang]
 
     if context.user_data.get('waiting_for_limit'):
@@ -1225,13 +1240,44 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             context.user_data['waiting_for_limit'] = False
             await update.message.reply_text(texts['parsing_started'])
             await process_parsing(update.message, context)
-            await log_to_channel(context, f"Пользователь указал кастомный лимит: {limit}", username)
+            await log_to_channel(context, f"Пользователь ввел кастомный лимит: {limit}", username)
         else:
             await update.message.reply_text("Пожалуйста, введите числовое значение для лимита.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
             await log_to_channel(context, f"Ошибка: некорректный кастомный лимит {limit_str}", username)
-    # Здесь может быть другая логика обработки сообщений, например, для парсинга ссылок
-    else:
-        await update.message.reply_text("Пожалуйста, выберите действие из меню.", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['home_cmd'], callback_data='home')]]))
+        return
+
+    if context.user_data.get('waiting_for_hash'):
+        hash_text = update.message.text.strip()
+        context.user_data['waiting_for_hash'] = False
+        for admin_id in ADMIN_IDS:
+            await context.bot.send_message(
+                chat_id=admin_id,
+                text=f"Новая транзакция от {name} (@{username}) (ID: {user_id}):\nХэш: {hash_text}",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Отклонить", callback_data=f'reject_{user_id}')]])
+            )
+        await update.message.reply_text(texts['payment_wait'])
+        await log_to_channel(context, f"Пользователь отправил хэш транзакции: {hash_text}", username)
+        return
+
+    if context.user_data.get('waiting_for_id'):
+        context.user_data['waiting_for_id'] = False
+        text = update.message.text.strip()
+        if text.startswith('@'):
+            try:
+                entity = await client_telethon.get_entity(text)
+                await update.message.reply_text(f"ID: {entity.id}\nТип: {type(entity).__name__}")
+            except Exception as e:
+                await update.message.reply_text(texts['id_error'].format(e=str(e)))
+        elif update.message.forward_from or update.message.forward_from_chat:
+            forwarded = update.message.forward_from or update.message.forward_from_chat
+            await update.message.reply_text(f"ID: {forwarded.id}\nТип: {type(forwarded).__name__}")
+        else:
+            await update.message.reply_text("Пожалуйста, отправьте @username, ссылку или перешлите сообщение.")
+        await log_to_channel(context, f"Пользователь запросил ID для: {text}", username)
+        return
+
+    await update.message.reply_text(texts['unknown_command'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['home_cmd'], callback_data='subscribed')]]))
+    await log_to_channel(context, "Неизвестная команда или текст", username)
 
 # Предполагаемая функция process_parsing
 async def process_parsing(message, context):
@@ -1252,14 +1298,6 @@ async def process_parsing(message, context):
     texts = LANGUAGES[lang]
     await message.reply_text(f"{texts['parsing_started']}\nТип: {context.user_data.get('parse_type', 'не указан')}\nЛимит: {context.user_data.get('limit', 'не указан')}")
     await log_to_channel(context, f"Начался парсинг для пользователя {user_id}", "system")
-
-# Обработчик команды /home
-async def home(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = update.effective_user.id
-    username = update.effective_user.username or "Без username"
-    menu_text, menu_keyboard = get_main_menu(user_id, context)
-    await update.effective_message.reply_text(menu_text, reply_markup=menu_keyboard)
-    await log_to_channel(context, "Пользователь вернулся в главное меню через /home", username)
 
 # Обработчик ошибок
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
