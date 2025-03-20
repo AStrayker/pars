@@ -1109,7 +1109,7 @@ async def process_parsing(message, context):
     context.user_data['parsing_in_progress'] = True
     context.user_data['last_message_id'] = message.message_id  # Сохраняем ID последнего сообщения для проверки старых кнопок
     
-    # Запускаем анимацию "Подождите..."
+    # Запускаем анимацию "Подождите..." для всех типов парсинга
     loading_task = asyncio.create_task(show_loading_message(message, context))
     
     try:
@@ -1138,6 +1138,162 @@ async def process_parsing(message, context):
                 await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
                 print(f"Ошибка парсинга (RPC): {str(e)}\n{traceback.format_exc()}")
                 return
+            
+            limit = check_parse_limit(user_id, context.user_data['limit'], context.user_data['parse_type'])
+            if context.user_data['parse_type'] == 'parse_authors':
+                data = await parse_commentators(normalized_link, limit)
+            elif context.user_data['parse_type'] == 'parse_participants':
+                data = await parse_participants(normalized_link, limit)
+            elif context.user_data['parse_type'] == 'parse_post_commentators':
+                data = await parse_post_commentators(normalized_link, limit)
+            elif context.user_data['parse_type'] == 'parse_phone_contacts':
+                data = await parse_phone_contacts(normalized_link, limit)
+            elif context.user_data['parse_type'] == 'parse_auth_access':
+                await parse_auth_access(normalized_link, context)
+                context.user_data['parsing_done'] = True
+                context.user_data['parsing_in_progress'] = False
+                return
+            
+            all_data.extend(data)
+        
+        # Парсинг завершен, устанавливаем флаг
+        context.user_data['parsing_done'] = True
+        
+        if context.user_data['parse_type'] == 'parse_phone_contacts':
+            filtered_data = all_data
+            excel_file = await create_excel_in_memory(filtered_data)
+            vcf_file = create_vcf_file(pd.DataFrame(filtered_data, columns=['ID', 'Username', 'First Name', 'Last Name', 'Phone', 'Nickname']))
+            
+            await message.reply_document(document=excel_file, filename="phones_contacts.xlsx", caption=texts['caption_phones'])
+            await message.reply_document(document=vcf_file, filename="phones_contacts.vcf", caption=texts['caption_phones'])
+            excel_file.close()
+            vcf_file.close()
+        else:
+            filtered_data = filter_data(all_data, context.user_data.get('filters', {}))
+            excel_file = await create_excel_in_memory(filtered_data)
+            
+            if context.user_data['parse_type'] == 'parse_authors':
+                caption = texts['caption_commentators']
+                filename = "commentators.xlsx"
+            elif context.user_data['parse_type'] == 'parse_participants':
+                caption = texts['caption_participants']
+                filename = "participants.xlsx"
+            elif context.user_data['parse_type'] == 'parse_post_commentators':
+                caption = texts['caption_post_commentators']
+                filename = "post_commentators.xlsx"
+            
+            await message.reply_document(document=excel_file, filename=filename, caption=caption)
+            excel_file.close()
+            
+            stats = get_statistics(filtered_data)
+            await message.reply_text(stats)
+            update_user_data(user_id, name, context, requests=1)
+            await log_to_channel(context, f"Парсинг завершен для {name} (@{username}): {context.user_data['parse_type']}, ссылки: {', '.join(context.user_data['links'])}, лимит: {limit}", username)
+        
+    except telethon_errors.FloodWaitError as e:
+        context.user_data['parsing_done'] = True
+        await message.reply_text(texts['flood_error'].format(e=str(e)))
+        await log_to_channel(context, f"Превышен лимит запросов для {name} (@{username}): {str(e)}", username)
+    except telethon_errors.RPCError as e:
+        context.user_data['parsing_done'] = True
+        await message.reply_text(texts['rpc_error'].format(e=str(e)))
+        await log_to_channel(context, f"Ошибка парсинга для {name} (@{username}): {str(e)}", username)
+        print(f"Ошибка парсинга (RPC): {str(e)}\n{traceback.format_exc()}")
+    except Exception as e:
+        context.user_data['parsing_done'] = True
+        await message.reply_text(f"Произошла ошибка: {str(e)}")
+        await log_to_channel(context, f"Неизвестная ошибка парсинга для {name} (@{username}): {str(e)}", username)
+        print(f"Неизвестная ошибка парсинга: {str(e)}\n{traceback.format_exc()}")
+    finally:
+        context.user_data['parsing_in_progress'] = False
+        if client_telethon.is_connected():
+            await client_telethon.disconnect()
+
+# Обновленная функция для показа сообщения "Подождите..." и "Я ещё работаю..."
+async def show_loading_message(message, context):
+    user_id = context.user_data.get('user_id', message.from_user.id)
+    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
+    texts = LANGUAGES[lang]
+    loading_msg = "Подождите..." if lang == 'Русский' else "Зачекайте..." if lang == 'Украинский' else "Please wait..." if lang == 'English' else "Bitte warten..."
+    working_msg = texts['working_message']
+    await asyncio.sleep(2)  # Даем небольшую задержку перед началом анимации
+    if 'parsing_done' not in context.user_data:
+        loading_message = await message.reply_text(loading_msg)
+        context.user_data['loading_message_id'] = loading_message.message_id
+        
+        dots = 1
+        elapsed_time = 0
+        working_sent = False
+        while 'parsing_done' not in context.user_data:
+            dots = (dots % 3) + 1
+            new_text = loading_msg + "." * dots
+            try:
+                await context.bot.edit_message_text(
+                    chat_id=message.chat_id,
+                    message_id=loading_message.message_id,
+                    text=new_text
+                )
+            except telegram_error.BadRequest:
+                break
+            await asyncio.sleep(1)
+            elapsed_time += 1
+            if elapsed_time >= 10 and not working_sent:
+                await message.reply_text(working_msg)
+                working_sent = True
+        
+        # Автоматическое удаление сообщения после завершения парсинга
+        if 'parsing_done' in context.user_data:
+            try:
+                await context.bot.delete_message(
+                    chat_id=message.chat_id,
+                    message_id=loading_message.message_id
+                )
+            except telegram_error.BadRequest:
+                pass
+
+# Обновленная функция парсинга комментаторов под постом
+async def parse_post_commentators(link, limit):
+    parts = link.split('/')
+    if len(parts) < 5 or not parts[-1].isdigit():
+        return []
+    chat_id = parts[-2] if parts[-2].startswith('+') else f'@{parts[-2]}'
+    message_id = int(parts[-1])
+    try:
+        entity = await client_telethon.get_entity(chat_id)
+        comments = await client_telethon(tl.functions.messages.GetRepliesRequest(
+            peer=entity,
+            msg_id=message_id,
+            offset_id=0,
+            offset_date=None,
+            add_offset=0,
+            limit=limit,
+            max_id=0,
+            min_id=0,
+            hash=0
+        ))
+        
+        data = []
+        for comment in comments.messages:
+            if hasattr(comment, 'from_id') and comment.from_id and isinstance(comment.from_id, tl.types.PeerUser):
+                user_id = comment.from_id.user_id
+                try:
+                    user = await client_telethon.get_entity(user_id)
+                    if isinstance(user, tl.types.User):
+                        data.append([
+                            user.id,
+                            user.username if user.username else "",
+                            user.first_name if user.first_name else "",
+                            user.last_name if user.last_name else "",
+                            user.bot,
+                            user
+                        ])
+                except (telethon_errors.RPCError, ValueError) as e:
+                    print(f"Ошибка получения сущности для ID {user_id}: {str(e)}")
+                    continue
+        return data
+    except telethon_errors.RPCError as e:
+        print(f"Ошибка парсинга комментаторов поста: {str(e)}\n{traceback.format_exc()}")
+        return []
             
             limit = check_parse_limit(user_id, context.user_data['limit'], context.user_data['parse_type'])
             if context.user_data['parse_type'] == 'parse_authors':
