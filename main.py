@@ -1,5 +1,6 @@
 #Всё работает. 
 #Только когда оформляется подписка вместо имени пользователя пишет Имя пользователяimport asyncio
+import asyncio
 import os
 import sys
 import traceback
