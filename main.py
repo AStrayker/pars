@@ -1026,40 +1026,6 @@ async def parse_auth_access(link, context):
         await log_to_channel(context, f"Ошибка авторизации для {name} (@{username}): {str(e)}", username)
 
 # Сообщение "Подождите..."
-async def show_loading_message(message, context):
-    user_id = context.user_data.get('user_id', message.from_user.id)
-    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
-    texts = LANGUAGES[lang]
-    loading_msg = "Подождите..." if lang == 'Русский' else "Зачекайте..." if lang == 'Украинский' else "Please wait..." if lang == 'English' else "Bitte warten..."
-    await asyncio.sleep(2)
-    if 'parsing_done' not in context.user_data:
-        loading_message = await message.reply_text(loading_msg)
-        context.user_data['loading_message_id'] = loading_message.message_id
-        
-        dots = 1
-        while 'parsing_done' not in context.user_data:
-            dots = (dots % 3) + 1
-            new_text = loading_msg + "." * dots
-            try:
-                await context.bot.edit_message_text(
-                    chat_id=message.chat_id,
-                    message_id=loading_message.message_id,
-                    text=new_text
-                )
-            except telegram_error.BadRequest:
-                break
-            await asyncio.sleep(1)
-        
-        if 'parsing_done' in context.user_data:
-            try:
-                await context.bot.delete_message(
-                    chat_id=message.chat_id,
-                    message_id=loading_message.message_id
-                )
-            except telegram_error.BadRequest:
-                pass
-
-# Обработка парсинга
 async def process_parsing(message, context):
     user_id = context.user_data.get('user_id', message.from_user.id)
     username = message.from_user.username or "Без username"
@@ -1082,7 +1048,10 @@ async def process_parsing(message, context):
             subscription = users[str(user_id)]['subscription']  # Обновляем subscription после изменения
     
     context.user_data['parsing_in_progress'] = True
-    asyncio.create_task(show_loading_message(message, context))
+    context.user_data['last_message_id'] = message.message_id  # Сохраняем ID последнего сообщения для проверки старых кнопок
+    
+    # Запускаем анимацию "Подождите..."
+    loading_task = asyncio.create_task(show_loading_message(message, context))
     
     try:
         await client_telethon.connect()
@@ -1127,6 +1096,9 @@ async def process_parsing(message, context):
                 return
             
             all_data.extend(data)
+        
+        # Парсинг завершен, устанавливаем флаг
+        context.user_data['parsing_done'] = True
         
         if context.user_data['parse_type'] == 'parse_phone_contacts':
             filtered_data = all_data
@@ -1175,21 +1147,22 @@ async def process_parsing(message, context):
             await message.reply_document(document=excel_file, filename=filename, caption=caption)
             msg = await message.reply_text(success_message, reply_markup=InlineKeyboardMarkup(keyboard))
             excel_file.close()
+            await context.bot.set_message_reaction(chat_id=message.chat_id, message_id=msg.message_id, reaction=["🎉"])
         
-        context.user_data['parsing_done'] = True
+        # Ждем завершения анимации загрузки перед очисткой
+        await loading_task
         update_user_data(user_id, name, context, requests=1)
         await log_to_channel(context, f"Успешный парсинг для {name} (@{username}): {context.user_data['parse_type']}, найдено {len(filtered_data)} записей", username)
-        
-        if context.user_data['parse_type'] != 'parse_phone_contacts':
-            await context.bot.set_message_reaction(chat_id=message.chat_id, message_id=msg.message_id, reaction=["🎉"])
     
     except telethon_errors.FloodWaitError as e:
         context.user_data['parsing_done'] = True
+        await loading_task  # Дожидаемся завершения анимации
         await message.reply_text(texts['flood_error'].format(e=str(e)))
         await log_to_channel(context, texts['flood_error'].format(e=str(e)), username)
         print(f"Ошибка FloodWait: {str(e)}\n{traceback.format_exc()}")
     except Exception as e:
         context.user_data['parsing_done'] = True
+        await loading_task  # Дожидаемся завершения анимации
         await message.reply_text(texts['rpc_error'].format(e=str(e)))
         await log_to_channel(context, f"Ошибка парсинга для {name} (@{username}): {str(e)}", username)
         print(f"Неизвестная ошибка парсинга: {str(e)}\n{traceback.format_exc()}")
@@ -1198,7 +1171,42 @@ async def process_parsing(message, context):
         if client_telethon.is_connected():
             await client_telethon.disconnect()
 
-# Обработчик callback-запросов
+# Обновленная функция анимации "Подождите..."
+async def show_loading_message(message, context):
+    user_id = context.user_data.get('user_id', message.from_user.id)
+    lang = load_users().get(str(user_id), {}).get('language', 'Русский')
+    texts = LANGUAGES[lang]
+    loading_msg = "Подождите..." if lang == 'Русский' else "Зачекайте..." if lang == 'Украинский' else "Please wait..." if lang == 'English' else "Bitte warten..."
+    await asyncio.sleep(2)  # Даем небольшую задержку перед началом анимации
+    if 'parsing_done' not in context.user_data:
+        loading_message = await message.reply_text(loading_msg)
+        context.user_data['loading_message_id'] = loading_message.message_id
+        
+        dots = 1
+        while 'parsing_done' not in context.user_data:
+            dots = (dots % 3) + 1
+            new_text = loading_msg + "." * dots
+            try:
+                await context.bot.edit_message_text(
+                    chat_id=message.chat_id,
+                    message_id=loading_message.message_id,
+                    text=new_text
+                )
+            except telegram_error.BadRequest:
+                break
+            await asyncio.sleep(1)
+        
+        # Автоматическое удаление сообщения после завершения парсинга
+        if 'parsing_done' in context.user_data:
+            try:
+                await context.bot.delete_message(
+                    chat_id=message.chat_id,
+                    message_id=loading_message.message_id
+                )
+            except telegram_error.BadRequest:
+                pass
+
+# Обновленный обработчик callback-запросов для отключения старых кнопок
 async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = query.from_user.id
@@ -1207,6 +1215,11 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     users = load_users()
     lang = users.get(str(user_id), {}).get('language', 'Русский')
     texts = LANGUAGES[lang]
+    
+    # Проверка, что запрос не устарел
+    if context.user_data.get('parsing_in_progress') and query.message.message_id < context.user_data.get('last_message_id', 0):
+        await query.answer("Дождитесь завершения текущего парсинга!", show_alert=True)
+        return
     
     await query.answer()
     
@@ -1263,6 +1276,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.edit_message_text(texts['link_group'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close')]]))
         return
     
+    # Остальные обработчики остаются без изменений, но проверка parsing_in_progress добавлена в начало
     if query.data.startswith('limit_'):
         limit = query.data.split('_')[1]
         if limit == 'custom':
