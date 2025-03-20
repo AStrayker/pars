@@ -1425,7 +1425,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(info_texts.get(info_type, "Информация недоступна"), reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data='close_menu')]]))
 
 # Основная функция запуска бота
-async def main():
+def main():
     application = Application.builder().token(BOT_TOKEN).build()
 
     application.add_handler(CommandHandler("start", start))
@@ -1437,11 +1437,8 @@ async def main():
     application.add_handler(CommandHandler("note", note))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     application.add_handler(CallbackQueryHandler(button))
-    await asyncio.sleep(2)  # Задержка перед запуском polling
-    await application.run_polling()
 
     application.run_polling()
 
 if __name__ == '__main__':
-    asyncio.run(main())
-
+    main()
