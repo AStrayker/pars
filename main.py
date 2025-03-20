@@ -1143,7 +1143,88 @@ async def process_parsing(message, context):
             await client_telethon.disconnect()
         context.user_data['parsing_in_progress'] = False
 
-# Обработчик кнопок (продолжение)
+# Функция button (обработчик кнопок)
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    user_id = query.from_user.id
+    username = query.from_user.username or "Без username"
+    name = query.from_user.full_name or "Без имени"
+    context.user_data['username'] = username
+    users = load_users()
+    lang = users.get(str(user_id), {}).get('language', 'Русский')
+    texts = LANGUAGES[lang]
+
+    if query.data.startswith('lang_'):
+        lang = query.data.split('_')[1]
+        update_user_data(user_id, name, context, lang=lang)
+        await query.message.delete()
+        await query.message.reply_text(
+            texts['subscribe'].format(channel=SUBSCRIPTION_CHANNEL_ID),
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]])
+        )
+        await log_to_channel(context, f"Выбран язык: {lang}", username)
+        return
+
+    if query.data == 'subscribed':
+        try:
+            member = await context.bot.get_chat_member(SUBSCRIPTION_CHANNEL_ID, user_id)
+            if member.status in ['member', 'administrator', 'creator']:
+                menu_text, menu_keyboard = get_main_menu(user_id, context)
+                await query.message.delete()
+                await query.message.reply_text(menu_text, reply_markup=menu_keyboard)
+                await log_to_channel(context, f"Пользователь подписан на канал", username)
+            else:
+                await query.message.reply_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]]))
+                await log_to_channel(context, f"Пользователь не подписан на канал", username)
+        except telegram_error.BadRequest as e:
+            await query.message.reply_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data='subscribed')]]))
+            await log_to_channel(context, f"Ошибка проверки подписки: {str(e)}", username)
+        return
+
+    if query.data == 'identifiers':
+        limit_ok, hours_left = check_request_limit(user_id)
+        if not limit_ok:
+            await query.message.reply_text(texts['limit_reached'].format(limit=5 if users[str(user_id)]['subscription']['type'] == 'Бесплатная' else 10, hours=hours_left))
+            return
+        context.user_data['waiting_for_id'] = True
+        await query.message.reply_text(texts['identifiers'])
+        await log_to_channel(context, "Пользователь запросил идентификаторы", username)
+        return
+
+    if query.data == 'home':
+        menu_text, menu_keyboard = get_main_menu(user_id, context)
+        await query.message.delete()
+        await query.message.reply_text(menu_text, reply_markup=menu_keyboard)
+        await log_to_channel(context, "Пользователь вернулся в главное меню", username)
+        return
+
+    if query.data == 'parser':
+        limit_ok, hours_left = check_request_limit(user_id)
+        if not limit_ok:
+            await query.message.reply_text(texts['limit_reached'].format(limit=5 if users[str(user_id)]['subscription']['type'] == 'Бесплатная' else 10, hours=hours_left))
+            return
+        keyboard = [
+            [InlineKeyboardButton("Авторы сообщений" if lang == 'Русский' else "Автори повідомлень" if lang == 'Украинский' else "Message authors" if lang == 'English' else "Nachrichtautoren", callback_data='parse_authors')],
+            [InlineKeyboardButton("Участники чата" if lang == 'Русский' else "Учасники чату" if lang == 'Украинский' else "Chat participants" if lang == 'English' else "Chat-Teilnehmer", callback_data='parse_participants')],
+            [InlineKeyboardButton("Комментаторы поста" if lang == 'Русский' else "Коментатори поста" if lang == 'Украинский' else "Post commentators" if lang == 'English' else "Post-Kommentatoren", callback_data='parse_post_commentators')],
+            [InlineKeyboardButton(texts['phone_contacts'], callback_data='parse_phone_contacts')],
+            [InlineKeyboardButton(texts['auth_access'], callback_data='parse_auth_access')],
+            [InlineKeyboardButton(texts['close'], callback_data='home')]
+        ]
+        await query.message.reply_text(texts['parser'], reply_markup=InlineKeyboardMarkup(keyboard))
+        await log_to_channel(context, "Пользователь открыл меню парсинга", username)
+        return
+
+    if query.data in ['parse_authors', 'parse_participants', 'parse_post_commentators', 'parse_phone_contacts', 'parse_auth_access']:
+        context.user_data['parse_type'] = query.data
+        if query.data == 'parse_post_commentators':
+            await query.message.reply_text(texts['link_post'])
+        elif query.data in ['parse_authors', 'parse_participants', 'parse_phone_contacts', 'parse_auth_access']:
+            await query.message.reply_text(texts['link_group'])
+        await log_to_channel(context, f"Выбран тип парсинга: {query.data}", username)
+        return
+
     if query.data == 'subscribe':
         keyboard = [
             [InlineKeyboardButton(texts['subscription_1h'], callback_data='sub_1h')],
