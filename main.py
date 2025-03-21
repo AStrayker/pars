@@ -709,7 +709,11 @@ async def show_loading_message(message, context):
     dots = 1
     elapsed_time = 0
     working_sent = False
-    while 'parsing_done' not in context.user_data:
+    start_time = datetime.now()
+    
+    while 'parsing_done' not in context.user_data or elapsed_time < 2:  # Минимальное время отображения 2 секунды
+        if 'parsing_done' in context.user_data and (datetime.now() - start_time).total_seconds() >= 2:
+            break
         dots = (dots % 3) + 1
         new_text = loading_msg + "." * dots
         try:
@@ -720,8 +724,8 @@ async def show_loading_message(message, context):
             )
         except telegram_error.BadRequest:
             break
-        await asyncio.sleep(1)
-        elapsed_time += 1
+        await asyncio.sleep(0.5)  # Уменьшаем интервал для более плавной анимации
+        elapsed_time = (datetime.now() - start_time).total_seconds()
         if elapsed_time >= 15 and not working_sent:
             working_message = await message.reply_text(working_msg)
             context.user_data['working_message_id'] = working_message.message_id
