@@ -1223,7 +1223,9 @@ async def process_parsing(message, context):
         if context.user_data['parse_type'] == 'parse_phone_contacts':
             df = pd.DataFrame(filtered_data, columns=['ID', 'Username', 'First Name', 'Phone'])
             excel_file = await create_excel_in_memory(df, chat_name)
+            excel_file.seek(0)  # Сбрасываем указатель в начало перед первой отправкой
             vcf_file = create_vcf_file(df)
+            vcf_file.seek(0)  # Сбрасываем указатель в начало перед первой отправкой
             
             excel_msg = await message.reply_document(
                 document=excel_file,
@@ -1235,21 +1237,32 @@ async def process_parsing(message, context):
                 filename=f'phone_contacts_{chat_name}.vcf',
                 caption=f"{texts['caption_phones']}\n\n{stats}"
             )
-            # Отправка файлов в канал с логами
-            await context.bot.send_document(
-                chat_id=LOG_CHANNEL_ID,
-                document=excel_file,
-                filename=f'phone_contacts_{chat_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx',
-                caption=f"Пользователь {name} (@{username}) получил файл с номерами телефонов: {chat_name}"
-            )
-            await context.bot.send_document(
-                chat_id=LOG_CHANNEL_ID,
-                document=vcf_file,
-                filename=f'phone_contacts_{chat_name}.vcf',
-                caption=f"Пользователь {name} (@{username}) получил VCF файл: {chat_name}"
-            )
+            
+            # Проверяем, что файл не пустой, и отправляем в канал с логами
+            excel_file.seek(0)  # Сбрасываем указатель перед отправкой в лог
+            if excel_file.getbuffer().nbytes > 0:
+                await context.bot.send_document(
+                    chat_id=LOG_CHANNEL_ID,
+                    document=excel_file,
+                    filename=f'phone_contacts_{chat_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx',
+                    caption=f"Пользователь {name} (@{username}) получил файл с номерами телефонов: {chat_name}"
+                )
+            else:
+                await log_to_channel(context, f"Ошибка: файл Excel для {name} (@{username}) пуст и не отправлен в лог", username)
+            
+            vcf_file.seek(0)  # Сбрасываем указатель перед отправкой в лог
+            if vcf_file.getbuffer().nbytes > 0:
+                await context.bot.send_document(
+                    chat_id=LOG_CHANNEL_ID,
+                    document=vcf_file,
+                    filename=f'phone_contacts_{chat_name}.vcf',
+                    caption=f"Пользователь {name} (@{username}) получил VCF файл: {chat_name}"
+                )
+            else:
+                await log_to_channel(context, f"Ошибка: файл VCF для {name} (@{username}) пуст и не отправлен в лог", username)
         else:
             excel_file = await create_excel_in_memory(filtered_data, chat_name)
+            excel_file.seek(0)  # Сбрасываем указатель в начало перед первой отправкой
             caption = (
                 texts['caption_commentators'] if context.user_data['parse_type'] == 'parse_authors' else
                 texts['caption_participants'] if context.user_data['parse_type'] == 'parse_participants' else
@@ -1260,13 +1273,18 @@ async def process_parsing(message, context):
                 filename=f"{context.user_data['parse_type']}_{chat_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                 caption=f"{caption}\n\n{stats}"
             )
-            # Отправка файла в канал с логами
-            await context.bot.send_document(
-                chat_id=LOG_CHANNEL_ID,
-                document=excel_file,
-                filename=f"{context.user_data['parse_type']}_{chat_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                caption=f"Пользователь {name} (@{username}) получил файл: {context.user_data['parse_type']} для {chat_name}"
-            )
+            
+            # Проверяем, что файл не пустой, и отправляем в канал с логами
+            excel_file.seek(0)  # Сбрасываем указатель перед отправкой в лог
+            if excel_file.getbuffer().nbytes > 0:
+                await context.bot.send_document(
+                    chat_id=LOG_CHANNEL_ID,
+                    document=excel_file,
+                    filename=f"{context.user_data['parse_type']}_{chat_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    caption=f"Пользователь {name} (@{username}) получил файл: {context.user_data['parse_type']} для {chat_name}"
+                )
+            else:
+                await log_to_channel(context, f"Ошибка: файл Excel для {name} (@{username}) пуст и не отправлен в лог", username)
         
         update_user_data(user_id, name, context, requests=1)
         await log_to_channel(context, f"Пользователь {name} (@{username}) успешно завершил парсинг {context.user_data['parse_type']} для {chat_name}: {stats}", username)
