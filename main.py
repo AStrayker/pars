@@ -17,7 +17,7 @@ import vobject
 # Указываем переменные через код или переменные среды
 API_ID = int(os.environ.get('API_ID', 25281388))
 API_HASH = os.environ.get('API_HASH', 'a2e719f61f40ca912567c7724db5764e')
-BOT_TOKEN = os.environ.get('BOT_TOKEN', '7981019134:AAEARQ__XD1Ki60avGlWL1wDKDVcUKh6ny8')
+BOT_TOKEN = os.environ.get('BOT_TOKEN', '7981019134:AAHV39jxmzvYWW0jiNf6vRW-pB2MSa7QGVU')
 LOG_CHANNEL_ID = -1002342891238
 SUBSCRIPTION_CHANNEL_ID = -1002425905138  # Оставляем для справки, но не используем
 SUPPORT_USERNAME = '@alex_strayker'
