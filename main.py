@@ -38,12 +38,12 @@ if not os.path.exists(DB_FILE):
         json.dump({}, f)
 
 def load_users():
- with open(DB_FILE, 'r') as f:
- return json.load(f)
+    with open(DB_FILE, 'r') as f:
+        return json.load(f)
 
 def save_users(users):
- with open(DB_FILE, 'w') as f:
- json.dump(users, f, indent=4)
+     with open(DB_FILE, 'w') as f:
+        json.dump(users, f, indent=4)
 
 # Языковые переводы для всех языков
 LANGUAGES = {
