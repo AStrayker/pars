@@ -34,8 +34,8 @@ client_telethon = TelegramClient(SESSION_FILE, API_ID, API_HASH)
 # База данных пользователей
 DB_FILE = 'users.json'
 if not os.path.exists(DB_FILE):
- with open(DB_FILE, 'w') as f:
- json.dump({}, f)
+    with open(DB_FILE, 'w') as f:
+        json.dump({}, f)
 
 def load_users():
  with open(DB_FILE, 'r') as f:
