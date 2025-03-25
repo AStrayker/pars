@@ -928,15 +928,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if 'waiting_for_filters' in context.user_data:
-        filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False, 'limit': context.user_data['limit']})
-        if 'да' in text.lower() or 'yes' in text.lower() or 'ja' in text.lower():
+    filters = context.user_data.get('filters', {'only_with_username': False, 'exclude_bots': False, 'only_active': False, 'limit': context.user_data['limit']})
+    if 'да' in text.lower() or 'yes' in text.lower() or 'ja' in text.lower():
+        if 'current_filter' in context.user_data:  # Check if key exists
             filters[context.user_data['current_filter']] = True
-        del context.user_data['waiting_for_filters']
+        else:
+            await update.message.reply_text(texts['rpc_error'].format(e="Неизвестный фильтр. Попробуйте снова."))
+            await client_telethon.disconnect()
+            return
+            
+    del context.user_data['waiting_for_filters']
+    if 'current_filter' in context.user_data:  # Safely delete only if it exists
         del context.user_data['current_filter']
-        context.user_data['filters'] = filters
-        await process_parsing(update.message, context)
-        await client_telethon.disconnect()
-        return
+    context.user_data['filters'] = filters
+    await process_parsing(update.message, context)
+    await client_telethon.disconnect()
+    return
     
     if 'parse_type' in context.user_data:
         if text:
