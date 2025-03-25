@@ -944,6 +944,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await process_parsing(update.message, context)
     await client_telethon.disconnect()
     return
+            
+    del context.user_data['waiting_for_filters']
+    if 'current_filter' in context.user_data:  # Safely delete only if it exists
+        del context.user_data['current_filter']
+    context.user_data['filters'] = filters
+    await process_parsing(update.message, context)
+    await client_telethon.disconnect()
+    return
     
     if 'parse_type' in context.user_data:
         if text:
